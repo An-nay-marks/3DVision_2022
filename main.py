@@ -8,25 +8,22 @@ GREEN = (0, 255, 0)
 
 
 def extract_faces(video_path):
+    inference_scale = 0.5
+    assert (inference_scale <= 1)
+
     capture = cv2.VideoCapture(video_path)
     fps = capture.get(cv2.CAP_PROP_FPS)
     file_name = os.path.basename(video_path)
 
-    min_width = 50
-    min_height = 50
-
     delay = int(1000 / fps)
     valid, frame = capture.read()
 
-    inv_scale = 4
-    scale = 1.0 / inv_scale
-
     while valid and cv2.waitKey(delay) & 0xFF != ord('q'):
-        bgr_frame = cv2.resize(frame, (0, 0), fx=scale, fy=scale)[:, :, ::-1]
+        bgr_frame = cv2.resize(frame, (0, 0), fx=inference_scale, fy=inference_scale)[:, :, ::-1]
         face_locations = face_recognition.face_locations(bgr_frame)
 
         for i, face_bounds in enumerate(face_locations):
-            top, right, bottom, left = [inv_scale * bound for bound in face_bounds]
+            top, right, bottom, left = [int(bound / inference_scale) for bound in face_bounds]
             name = f'Person {i+1}'
             font = cv2.FONT_HERSHEY_DUPLEX
             cv2.rectangle(frame, (left, top), (right, bottom), GREEN, 2)
