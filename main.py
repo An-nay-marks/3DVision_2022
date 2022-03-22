@@ -5,25 +5,24 @@ import time
 
 from insightface.detection.scrfd.tools import scrfd
 
-WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
-
 
 def analyze_video(video_path):
-    onnx_path = 'onnx/scrfd_34g.onnx'
-    detector = scrfd.SCRFD(model_file=onnx_path)
-
     capture = cv2.VideoCapture(video_path)
-    fps = capture.get(cv2.CAP_PROP_FPS)
+    valid, frame = capture.read()
+
+    if not valid:
+        raise RuntimeError(video_path + " is not a valid video file")
+
     file_name = os.path.basename(video_path)
+    fps = capture.get(cv2.CAP_PROP_FPS)
+    frame_delay = max(1.0, 1000 / fps)
 
     # width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     # height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+    detector = scrfd.SCRFD(model_file='onnx/scrfd_34g.onnx')
     detector.prepare(0, input_size=(640, 640))
-    frame_delay = max(1.0, 1000 / fps)
 
-    valid, frame = capture.read()
     key = cv2.waitKey(1)
     t1 = time.time_ns()
 
@@ -35,8 +34,8 @@ def analyze_video(video_path):
             left, top, right, bottom, score = face_bounds.astype(int)
             name = f'Person {i+1}'
             font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.rectangle(frame, (left, top), (right, bottom), GREEN, 2)
-            cv2.putText(frame, name, (left, bottom + 25), font, 1.0, WHITE, 1)
+            cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+            cv2.putText(frame, name, (left, bottom + 25), font, 1.0, (255, 255, 255), 1)
 
         t2 = time.time_ns()
         processing_delay = (t2 - t1) / 1e6
@@ -52,7 +51,6 @@ def analyze_video(video_path):
 
 
 def main():
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     analyze_video(sys.argv[1])
 
 
