@@ -1,7 +1,8 @@
 import os
 import sys
-import cv2
 import time
+import cv2
+import onnxruntime
 
 from insightface.detection.scrfd.tools import scrfd
 
@@ -20,7 +21,10 @@ def analyze_video(video_path):
     # width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     # height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    detector = scrfd.SCRFD(model_file='onnx/scrfd_34g.onnx')
+    model_file = 'onnx/scrfd_34g.onnx'
+    providers = (['CUDAExecutionProvider', 'CPUExecutionProvider'])
+    session = onnxruntime.InferenceSession(model_file, None, providers)
+    detector = scrfd.SCRFD(model_file, session)
     detector.prepare(0, input_size=(640, 640))
 
     key = cv2.waitKey(1)
@@ -50,9 +54,5 @@ def analyze_video(video_path):
     cv2.destroyAllWindows()
 
 
-def main():
-    analyze_video(sys.argv[1])
-
-
 if __name__ == '__main__':
-    main()
+    analyze_video(sys.argv[1])
