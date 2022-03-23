@@ -17,14 +17,15 @@ certifi==2021.10.8
 click==8.0.4
 cmake==3.22.3
 colorama==0.4.4
-dlib @ file:///D:/bld/dlib_1647301355251/work
+# dlib @ file:///D:/bld/dlib_1647301355251/work
 face-recognition==1.3.0
 face-recognition-models==0.3.0
 importlib-metadata==4.11.3
-numpy @ file:///D:/bld/numpy_1640083233759/work
+# numpy @ file:///D:/bld/numpy_1640083233759/work
 opencv-python==4.5.5.64
 Pillow==9.0.1
 typing_extensions==4.1.1
 wincertstore==0.2
 zipp==3.7.0
 opencv-contrib-python
+onnxruntime
