@@ -45,8 +45,9 @@ def analyze_video(video_path):
         processing_delay = (t2 - t1) / 1e6
         delay = max(1, round(frame_delay - processing_delay))
         key = cv2.waitKey(delay)
-        cv2.imshow(file_name, frame)
+
         t1 = time.time_ns()
+        cv2.imshow(file_name, frame)
 
         valid, frame = capture.read()
 
