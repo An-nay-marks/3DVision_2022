@@ -18,8 +18,9 @@ if __name__ == '__main__':
     specific_parser = argparse.ArgumentParser(description = "Parser for specific arguments for called function")
     args = parser.parse_known_args()[0]
     if args.function.lower() == 'detect_faces':
-        specific_parser.add_argument('-v', '--video_path', type=str)
-        filter_args = ["video_path"]
+        specific_parser.add_argument('-v', '--video_path', type=str, help="Video Path where the video to be analyzed can be found at, starting at project root folder is enough")
+        specific_parser.add_argument('-t', '--target_path', type=str, help="Target Path, where the detected images are saved in.")
+        filter_args = ["video_path", "target_path"]
     else:
         msg = "Error: Make sure you spelled the function type correctly. Currently available functions: " + ", ".join(functions_dic.keys())
         print(msg)        

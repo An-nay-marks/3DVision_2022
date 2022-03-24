@@ -7,8 +7,12 @@ import onnxruntime
 from insightface.detection.scrfd.tools import scrfd
 
 
-def analyze_video(video_path):
+def analyze_video(video_path, target_path):
     capture = cv2.VideoCapture(video_path)
+    target = target_path
+    if not os.path.exists(target):
+        os.mkdir(target)
+    image_id = 0
     valid, frame = capture.read()
 
     if not valid:
@@ -20,6 +24,8 @@ def analyze_video(video_path):
 
     # width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     # height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    
+    height, width, channels = frame.shape
 
     model_file = 'onnx/scrfd_34g.onnx'
     providers = (['CUDAExecutionProvider', 'CPUExecutionProvider'])
@@ -36,10 +42,29 @@ def analyze_video(video_path):
 
         for i, face_bounds in enumerate(bboxes):
             left, top, right, bottom, score = face_bounds.astype(int)
+            
+            # add 30% of padding everywhere, so we get the whole head instead of just the face
+            padding_up_down = int(abs(top-bottom)*0.3)
+            padding_up = min([padding_up_down, top])
+            padding_down = min([padding_up_down, height-bottom])
+            padding_left_right = int(abs(right-left)*0.3)
+            padding_left = min([padding_left_right, left])
+            padding_right = min([padding_left_right, width-right])
             name = f'Person {i+1}'
             font = cv2.FONT_HERSHEY_DUPLEX
+            left -= padding_left
+            top -= padding_up
+            right += padding_right
+            bottom += padding_down
+            
+            
             cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
             cv2.putText(frame, name, (left, bottom + 25), font, 1.0, (255, 255, 255), 1)
+            
+            # save face patch
+            file_name = f"{target_path}/{image_id}.png"
+            image_id+=1
+            cv2.imwrite(filename=file_name, img=frame[top:bottom,left:right,::])
 
         t2 = time.time_ns()
         processing_delay = (t2 - t1) / 1e6
@@ -47,7 +72,7 @@ def analyze_video(video_path):
         key = cv2.waitKey(delay)
 
         t1 = time.time_ns()
-        cv2.imshow(file_name, frame)
+        # cv2.imshow(file_name, frame)
 
         valid, frame = capture.read()
 
