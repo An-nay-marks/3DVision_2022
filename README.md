@@ -14,10 +14,10 @@
 * `conda create --name yolov5 python=3.8`
 * `conda activate yolov5`
 * `pip install -qr requirements.txt`
-* python detect.py --source 0  # webcam
-                          img.jpg  # image
-                          vid.mp4  # video
-                          path/  # directory
-                          path/*.jpg  # glob
-                          'https://youtu.be/Zgi9g1ksQHc'  # YouTube
-                          'rtsp://example.com/media.mp4'  # RTSP, RTMP, HTTP stream
+* `python detect.py --source 0  # webcam\
+img.jpg  # image\
+vid.mp4  # video\
+path/  # directory\
+path/*.jpg  # glob\
+https://youtu.be/Zgi9g1ksQHc'  # YouTube\
+'rtsp://example.com/media.mp4'  # RTSP, RTMP, HTTP stream`
