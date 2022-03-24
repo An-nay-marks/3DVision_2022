@@ -23,8 +23,8 @@ def analyze_video(video_path):
     fps = capture.get(cv2.CAP_PROP_FPS)
     frame_delay = max(1.0, 1000 / fps)
 
-    detector = scrfd.SCRFaceDetector('model_files/scrfd_34g.onnx')
-    # detector = yolo5.YOLOv5FaceDetector('model_files/yolov5l.pt')
+    # detector = scrfd.SCRFaceDetector('model_files/scrfd_34g.onnx')
+    detector = yolo5.YOLOv5FaceDetector('model_files/yolov5l.pt')
 
     key = cv2.waitKey(1)
     t1 = time.time_ns()
