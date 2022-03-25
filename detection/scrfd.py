@@ -10,4 +10,5 @@ class SCRFaceDetector(SCRFD):
         self.prepare(0, input_size=(640, 640))
 
     def detect(self, frame, thresh=0.5, input_size = None, max_num=0, metric='default'):
-        return super().detect(frame)[0]
+        rgb_frame = frame[:, :, ::-1]
+        return super().detect(rgb_frame)[0]

@@ -30,8 +30,7 @@ def analyze_video(video_path):
     t1 = time.time_ns()
 
     while valid and key & 0xFF != ord('q'):
-        rgb_frame = frame[:, :, ::-1]
-        bboxes = detector.detect(rgb_frame)
+        bboxes = detector.detect(frame)
 
         for i, face_bounds in enumerate(bboxes):
             left, top, right, bottom, score = face_bounds.astype(int)
