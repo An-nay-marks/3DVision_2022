@@ -15,7 +15,7 @@ class YOLOv5FaceDetector:
 
     def detect(self, frame):
         img_size = 800
-        conf_thres = 0.3
+        conf_thres = 0.5
         iou_thres = 0.5
 
         img0 = copy.deepcopy(frame)

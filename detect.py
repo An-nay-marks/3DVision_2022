@@ -8,7 +8,7 @@ from detection import scrfd, yolo5
 
 def parse_args():
     parser = argparse.ArgumentParser(description="3D face reconstruction pipeline from video", add_help=False)
-    parser.add_argument('-v', '--video_path', type=str)
+    parser.add_argument('-p', '--path', type=str)
     return parser.parse_known_args()[0]
 
 
@@ -21,10 +21,10 @@ def analyze_video(video_path):
 
     file_name = os.path.basename(video_path)
     fps = capture.get(cv2.CAP_PROP_FPS)
-    frame_delay = max(1.0, 1000 / fps)
+    frame_time = max(1.0, 1000 / fps)
 
-    # detector = scrfd.SCRFaceDetector('model_files/scrfd_34g.onnx')
-    detector = yolo5.YOLOv5FaceDetector('model_files/yolov5l.pt')
+    detector = scrfd.SCRFaceDetector('model_files/scrfd_34g.onnx')
+    # detector = yolo5.YOLOv5FaceDetector('model_files/yolov5l.pt')
 
     key = cv2.waitKey(1)
     t1 = time.time_ns()
@@ -40,8 +40,8 @@ def analyze_video(video_path):
             cv2.putText(frame, name, (left, bottom + 25), font, 1.0, (255, 255, 255), 1)
 
         t2 = time.time_ns()
-        processing_delay = (t2 - t1) / 1e6
-        delay = max(1, round(frame_delay - processing_delay))
+        processing_time = (t2 - t1) / 1e6
+        delay = max(1, round(frame_time - processing_time))
         key = cv2.waitKey(delay)
 
         t1 = time.time_ns()
@@ -55,4 +55,4 @@ def analyze_video(video_path):
 
 if __name__ == '__main__':
     args = parse_args()
-    analyze_video(args.video_path)
+    analyze_video(args.path)

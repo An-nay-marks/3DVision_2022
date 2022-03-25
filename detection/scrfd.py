@@ -9,6 +9,6 @@ class SCRFaceDetector(SCRFD):
         super().__init__(model_file, session)
         self.prepare(0, input_size=(640, 640))
 
-    def detect(self, frame, thresh=0.5, input_size = None, max_num=0, metric='default'):
+    def detect(self, frame, thresh=0.6, input_size=None, max_num=0, metric='default'):
         rgb_frame = frame[:, :, ::-1]
-        return super().detect(rgb_frame)[0]
+        return super().detect(rgb_frame, thresh, input_size, max_num, metric)[0]
