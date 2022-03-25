@@ -1,7 +1,10 @@
 import copy
+import sys
 import cv2
+import numpy as np
 import torch
 
+sys.path.append('yolo5_face')
 import yolo5_face.detect_face as yolo5
 
 
@@ -40,11 +43,7 @@ class YOLOv5FaceDetector:
 
         # Apply NMS
         pred = yolo5.non_max_suppression_face(pred, conf_thres, iou_thres)
-
-        print('img.shape: ', img.shape)
-        print('orgimg.shape: ', frame.shape)
-
-        face_locations = []
+        faces = []
 
         for i, det in enumerate(pred):  # detections per image
             gn = torch.tensor(frame.shape)[[1, 0, 1, 0]].to(self.device)  # normalization gain
@@ -56,9 +55,8 @@ class YOLOv5FaceDetector:
                 # det[:, 5:15] = yolo5.scale_coords_landmarks(img.shape[2:], det[:, 5:15], frame.shape).round()
 
                 for j in range(det.size()[0]):
-                    x, y, w, h = (yolo5.xyxy2xywh(det[j, :4].view(1, 4)) / gn).view(-1).tolist()
-                    # conf = det[j, 4].cpu().numpy()
+                    face = det[j, :5].cpu().numpy()
                     # landmarks = (det[j, 5:15].view(1, 10) / gn_lks).view(-1).tolist()
-                    face_locations.append([x, y, x + w, y + h])
+                    faces.append(face)
 
-        return face_locations
+        return np.asarray(faces)
