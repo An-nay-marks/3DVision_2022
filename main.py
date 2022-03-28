@@ -31,5 +31,6 @@ if __name__ == '__main__':
         spec_args = specific_parser.parse_known_args()[0]
         fun = functions_dic[args.function.lower()]
         fun(**{k: v for k, v in spec_args._get_kwargs()})
-    except (KeyError, AttributeError):
+    except (KeyError, AttributeError) as err:
+        print(err)
         print("Error: Make sure the parameters for "+ args.function + " are correct. They have to be contained in this list: " + ", ".join(filter_args))
