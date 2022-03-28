@@ -3,11 +3,13 @@ import sys
 import time
 import cv2
 import onnxruntime
+from utils import ROOT_DIR
 
 from insightface.detection.scrfd.tools import scrfd
 
 
 def analyze_video(video_path, target_path):
+    video_path = f"{ROOT_DIR}/{video_path}"
     capture = cv2.VideoCapture(video_path)
     target = target_path
     if not os.path.exists(target):
