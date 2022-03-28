@@ -31,7 +31,12 @@ def analyze_video(video_path, target_path):
 
     model_file = 'onnx/scrfd_34g.onnx'
     providers = (['CUDAExecutionProvider', 'CPUExecutionProvider'])
-    session = onnxruntime.InferenceSession(model_file, None, providers)
+    
+    so = onnxruntime.SessionOptions()
+    so.inter_op_num_threads = 4
+    so.intra_op_num_threads = 2
+    session = onnxruntime.InferenceSession(model_file, so)
+    # session = onnxruntime.InferenceSession(model_file, providers)
     detector = scrfd.SCRFD(model_file, session)
     detector.prepare(0, input_size=(640, 640))
 
