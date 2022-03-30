@@ -46,7 +46,7 @@ class YOLOv5FaceDetector:
         faces = []
 
         for i, det in enumerate(pred):  # detections per image
-            gn = torch.tensor(frame.shape)[[1, 0, 1, 0]].to(self.device)  # normalization gain
+            # gn = torch.tensor(frame.shape)[[1, 0, 1, 0]].to(self.device)  # normalization gain
             # gn_lks = torch.tensor(frame.shape)[[1, 0, 1, 0, 1, 0, 1, 0, 1, 0]].to(self.device)
 
             if len(det):
