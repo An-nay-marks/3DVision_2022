@@ -4,7 +4,7 @@ import time
 import cv2
 
 from detection import scrfd, yolo5
-from recognition import arcface
+from recognition import arcface, face_identifier
 
 
 def parse_args():
@@ -27,6 +27,7 @@ def analyze_video(video_path):
     detector = scrfd.SCRFaceDetector('model_files/scrfd_34g.onnx')
     # detector = yolo5.YOLOv5FaceDetector('model_files/yolov5l.pt')
     encoder = arcface.ArcFaceR50('model_files/arcface_r50.pth')
+    identifier = face_identifier.FaceIdentifier(threshold=0.2)
 
     key = cv2.waitKey(1)
     t1 = time.time_ns()
@@ -34,18 +35,18 @@ def analyze_video(video_path):
     while valid and key & 0xFF != ord('q'):
         bboxes = detector.detect(frame)
 
-        for i, face_bounds in enumerate(bboxes):
-            left, top, right, bottom, score = face_bounds.astype(int)
+        for i, face in enumerate(bboxes):
+            left, top, right, bottom, score = face.astype(int)
 
             if min(bottom-top, right-left) > 110:
                 face_patch = frame[top:bottom+1, left:right+1]
-                encoder.encode(face_patch)
-                face_bounds[-1] = i
+                encoding = encoder.encode(face_patch)
+                face[-1] = identifier.get_identity(encoding)
             else:
-                face_bounds[-1] = -1
+                face[-1] = -1
 
-        for i, face_bounds in enumerate(bboxes):
-            left, top, right, bottom, person = face_bounds.astype(int)
+        for face in bboxes:
+            left, top, right, bottom, person = face.astype(int)
             name = f'Person {person+1}'
             font = cv2.FONT_HERSHEY_DUPLEX
             cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
