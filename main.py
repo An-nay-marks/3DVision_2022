@@ -13,6 +13,22 @@ def parse_args():
     return parser.parse_known_args()[0]
 
 
+def pad_face(img, left, top, right, bottom, padding=0):
+    width = right - left + 1
+    height = bottom - top + 1
+
+    padded_size = max(width, height) + 2 * padding
+    center = (left+right)/2, (bottom+top)/2
+
+    left = max(0, round(center[0] - padded_size/2))
+    right = min(left + padded_size, img.shape[1])
+
+    top = max(0, round(center[1] - padded_size/2))
+    bottom = min(top + padded_size, img.shape[0])
+
+    return left, top, right, bottom
+
+
 def analyze_video(video_path):
     capture = cv2.VideoCapture(video_path)
     valid, frame = capture.read()
@@ -26,7 +42,7 @@ def analyze_video(video_path):
 
     detector = scrfd.SCRFaceDetector('model_files/scrfd_34g.onnx')
     # detector = yolo5.YOLOv5FaceDetector('model_files/yolov5l.pt')
-    encoder = arcface.ArcFaceR50('model_files/arcface_r50.pth')
+    encoder = arcface.ArcFaceR100('model_files/arcface_r100.pth')
     identifier = face_identifier.FaceIdentifier(threshold=0.2)
 
     key = cv2.waitKey(1)
@@ -37,6 +53,7 @@ def analyze_video(video_path):
 
         for i, face in enumerate(bboxes):
             left, top, right, bottom, score = face.astype(int)
+            # left, top, right, bottom = pad_face(frame, left, top, right, bottom)
 
             if min(bottom-top, right-left) > 110:
                 face_patch = frame[top:bottom+1, left:right+1]

@@ -20,7 +20,7 @@ class ArcFace:
         img = np.transpose(img, (2, 0, 1))
         img = torch.from_numpy(img).unsqueeze(0).float().to(self.device)
         img.div_(255).sub_(0.5).div_(0.5)
-        return self.model(img).cpu().numpy()
+        return self.model(img).cpu().numpy()[0]
 
 
 class ArcFaceR18(ArcFace):
