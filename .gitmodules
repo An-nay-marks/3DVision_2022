@@ -4,3 +4,6 @@
 [submodule "yolo5_face"]
 	path = yolo5_face
 	url = https://github.com/deepcam-cn/yolov5-face
+[submodule "DECA"]
+	path = DECA
+	url = https://github.com/YadiraF/DECA.git

@@ -2,6 +2,7 @@ import argparse
 import os
 import time
 import cv2
+import numpy as np
 
 from detection import scrfd, yolo5
 from recognition import arcface, face_identifier
@@ -13,19 +14,15 @@ def parse_args():
     return parser.parse_known_args()[0]
 
 
-def pad_face(img, left, top, right, bottom, padding=0):
-    width = right - left + 1
-    height = bottom - top + 1
+def pad_face(img, left, top, right, bottom):
+    factor = 0.35
+    pad_x = round((right - left) * factor / 2)
+    pad_y = round((bottom - top) * factor / 2)
 
-    padded_size = max(width, height) + 2 * padding
-    center = (left+right)/2, (bottom+top)/2
-
-    left = max(0, round(center[0] - padded_size/2))
-    right = min(left + padded_size, img.shape[1])
-
-    top = max(0, round(center[1] - padded_size/2))
-    bottom = min(top + padded_size, img.shape[0])
-
+    left = max(0, left - pad_x)
+    right = min(img.shape[1], right + pad_x)
+    top = max(0, top - pad_y)
+    bottom = min(img.shape[0], bottom + pad_y)
     return left, top, right, bottom
 
 
@@ -43,7 +40,7 @@ def analyze_video(video_path):
     detector = scrfd.SCRFaceDetector('model_files/scrfd_34g.onnx')
     # detector = yolo5.YOLOv5FaceDetector('model_files/yolov5l.pt')
     encoder = arcface.ArcFaceR100('model_files/arcface_r100.pth')
-    identifier = face_identifier.FaceIdentifier(threshold=0.2)
+    identifier = face_identifier.FaceIdentifier(threshold=0.3)
 
     key = cv2.waitKey(1)
     t1 = time.time_ns()
@@ -52,22 +49,18 @@ def analyze_video(video_path):
         bboxes = detector.detect(frame)
 
         for i, face in enumerate(bboxes):
-            left, top, right, bottom, score = face.astype(int)
-            # left, top, right, bottom = pad_face(frame, left, top, right, bottom)
+            left, top, right, bottom = pad_face(frame, *face[:-1].astype(int))
+            identity = -1
 
             if min(bottom-top, right-left) > 110:
                 face_patch = frame[top:bottom+1, left:right+1]
                 encoding = encoder.encode(face_patch)
-                face[-1] = identifier.get_identity(encoding)
-            else:
-                face[-1] = -1
+                identity = identifier.get_identity(encoding)
 
-        for face in bboxes:
-            left, top, right, bottom, person = face.astype(int)
-            name = f'Person {person+1}'
+            name = f'Person {identity + 1}'
             font = cv2.FONT_HERSHEY_DUPLEX
             cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
-            if person != -1:
+            if identity != -1:
                 cv2.putText(frame, name, (left, bottom + 25), font, 1.0, (255, 255, 255), 1)
 
         t2 = time.time_ns()
