@@ -1,11 +1,12 @@
 import argparse
 import os
+import shutil
 import time
 import cv2
-import numpy as np
 
 from detection import scrfd, yolo5
 from recognition import arcface, face_identifier
+from reconstruction.deca import DECAReconstruction
 
 
 def parse_args():
@@ -42,8 +43,18 @@ def analyze_video(video_path):
     encoder = arcface.ArcFaceR100('model_files/arcface_r100.pth')
     identifier = face_identifier.FaceIdentifier(threshold=0.3)
 
+    deca_file = 'model_files/deca_model.tar'
+    flame_file = 'model_files/generic_model.pkl'
+    albedo_file = None
+    deca = DECAReconstruction(deca_file, flame_file, albedo_file)
+
     key = cv2.waitKey(1)
     t1 = time.time_ns()
+
+    out_directory = 'out'
+    if os.path.exists(out_directory):
+        shutil.rmtree(out_directory)
+    os.makedirs(out_directory)
 
     while valid and key & 0xFF != ord('q'):
         bboxes = detector.detect(frame)
@@ -56,6 +67,13 @@ def analyze_video(video_path):
                 face_patch = frame[top:bottom+1, left:right+1]
                 encoding = encoder.encode(face_patch)
                 identity = identifier.get_identity(encoding)
+
+                opdict = deca.reconstruct(face_patch)
+                face_nr = identifier.identities[identity].num_encodings
+                obj_name = f'frame_{face_nr}'
+                obj_dir = os.path.join(out_directory, f'id_{identity}', obj_name)
+                os.makedirs(obj_dir, exist_ok=True)
+                deca.save_obj(os.path.join(obj_dir, f'{obj_name}.obj'), opdict)
 
             name = f'Person {identity + 1}'
             font = cv2.FONT_HERSHEY_DUPLEX
