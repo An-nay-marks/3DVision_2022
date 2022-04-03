@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 sys.path.append('yolo5_face')
-import yolo5_face.detect_face as yolo5
+from detection.yolo5_face import detect_face as yolo5
 
 
 class YOLOv5FaceDetector:

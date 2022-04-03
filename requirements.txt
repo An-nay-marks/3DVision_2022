@@ -25,3 +25,4 @@ wincertstore==0.2
 zipp==3.7.0
 opencv-contrib-python
 onnxruntime
+keras_vggface

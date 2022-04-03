@@ -1,6 +1,7 @@
-datasets/videos/*
-datasets/images/*
+datasets/*
 zzz_tests.py
+data/videos/*
+data/images/*
 
 
 
