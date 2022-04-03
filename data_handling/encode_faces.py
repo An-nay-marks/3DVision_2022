@@ -1,7 +1,7 @@
 import cv2
 import glob
 from recognition import arcface
-from utils import ROOT_DIR
+from utils_3DV import ROOT_DIR
 def encode_faces(source_dir=None, image_list=None, encoder = "arcface"):
     """Encodes the images, either by encoding all images loaded from source_dir, or directly from image_list.\n
     Either source_dir or image_list has to be specified!

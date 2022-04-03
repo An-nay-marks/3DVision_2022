@@ -1,6 +1,6 @@
 import numpy
 import onnxruntime
-from insightface.detection.scrfd.tools.scrfd import SCRFD
+from detection.insightface.detection.scrfd.tools.scrfd import SCRFD
 
 
 class SCRFaceDetector(SCRFD):

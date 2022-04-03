@@ -4,15 +4,15 @@ import cv2
 import shutil
 import time
 import cv2
-from utils import ROOT_DIR
+from utils_3DV import ROOT_DIR
 from detection import scrfd, yolo5
 from recognition import arcface, face_identifier
 from reconstruction.deca import DECAReconstruction
 from data_handling.detect_faces import pad_face
 
-def run_online_pipeline(video_path, model = "scrfd"):
-    if model not in ["scrfd", "yolo5"]:
-        raise RuntimeError(f"{model} is not a valid face detector")
+def run_online_pipeline(video_path, detector = "scrfd"):
+    if detector not in ["scrfd", "yolo5"]:
+        raise RuntimeError(f"{detector} is not a valid face detector")
     capture = cv2.VideoCapture(video_path)
     valid, frame = capture.read()
 
@@ -23,7 +23,7 @@ def run_online_pipeline(video_path, model = "scrfd"):
     fps = capture.get(cv2.CAP_PROP_FPS)
     frame_time = max(1.0, 1000 / fps)
 
-    detector = scrfd.SCRFaceDetector(f'{ROOT_DIR}/data/model_files/scrfd_34g.onnx') if model=="scrfd" else yolo5.YOLOv5FaceDetector(f'{ROOT_DIR}/data/model_files/yolov5l.pt')
+    detector = scrfd.SCRFaceDetector(f'{ROOT_DIR}/data/model_files/scrfd_34g.onnx') if detector=="scrfd" else yolo5.YOLOv5FaceDetector(f'{ROOT_DIR}/data/model_files/yolov5l.pt')
     encoder = arcface.ArcFaceR100(f'{ROOT_DIR}/data/model_files/arcface_r100.pth')
     identifier = face_identifier.FaceIdentifier(threshold=0.3)
 

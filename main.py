@@ -1,24 +1,18 @@
 import argparse
-import os
-
-
-from detection import scrfd, yolo5
-from recognition import arcface, face_identifier
-from reconstruction.deca import DECAReconstruction
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="3D face reconstruction pipeline from video", add_help=False)
-    parser.add_argument('-p', '--path', type=str)
-    return parser.parse_known_args()[0]
-
+import sys
+from data_handling.detect_faces import face_detection
+from data_handling.online_pipeline import run_online_pipeline
+from data_handling.offline_pipeline import run_offline_pipeline
+from utils_3DV import DETECTORS
 
 if __name__ == '__main__':
     """The main function to call all functions in this Repo with
     """
     
     # dict of functions that can be called
-    functions_dic = {'detect_faces': ep.analyze_video}
+    functions_dic = {'detect_faces': face_detection,
+                     'online_pipeline': run_online_pipeline,
+                     'offline_pipeline': run_offline_pipeline}
     
     # parent parser
     parser = argparse.ArgumentParser(description="Implementation of the 3D Face Reconstruction Pipeline using Videos", add_help=False)
@@ -28,9 +22,18 @@ if __name__ == '__main__':
     specific_parser = argparse.ArgumentParser(description = "Parser for specific arguments for called function")
     args = parser.parse_known_args()[0]
     if args.function.lower() == 'detect_faces':
-        specific_parser.add_argument('-v', '--video_path', type=str, help="Video Path where the video to be analyzed can be found at, starting at project root folder is enough")
-        specific_parser.add_argument('-t', '--target_path', type=str, help="Target Path, where the detected images are saved in.")
-        filter_args = ["video_path", "target_path"]
+        specific_parser.add_argument('-v', '--video_path', type=str, help="Video Path where the video to be analyzed can be found at, starting at project root folder")
+        specific_parser.add_argument('-t', '--target_path', type=str, help="Target Path, where the detected images are saved in. Defaults to None, if they shouldn't be saved", default=None)
+        specific_parser.add_argument('-d', '--detector', type=str, help="Detector Model, default is scrfd. Currently available Detectors: ".format(DETECTORS), default="scrfd")
+        filter_args = ["video_path", "target_path", "detector"]
+    elif args.function.lower() == 'online_pipeline':
+        specific_parser.add_argument('-v', '--video_path', type=str, help="Video Path where the video to be analyzed can be found at, starting at project root folder")
+        specific_parser.add_argument('-d', '--detector', type=str, help="Detector Model, default is scrfd. Currently available Detectors: ".format(DETECTORS), default="scrfd")
+        filter_args = ["video_path", "detector"]
+    elif args.function.lower() == 'offline_pipeline':
+        specific_parser.add_argument('-v', '--video_path', type=str, help="Video Path where the video to be analyzed can be found at, starting at project root folder")
+        specific_parser.add_argument('-d', '--detector', type=str, help="Detector Model, default is scrfd. Currently available Detectors: ".format(DETECTORS), default="scrfd")
+        filter_args = ["video_path", "detector"]
     else:
         msg = "Error: Make sure you spelled the function type correctly. Currently available functions: " + ", ".join(functions_dic.keys())
         print(msg)        
@@ -44,5 +47,3 @@ if __name__ == '__main__':
     except (KeyError, AttributeError) as err:
         print(err)
         print("Error: Make sure the parameters for "+ args.function + " are correct. They have to be contained in this list: " + ", ".join(filter_args))
-    args = parse_args()
-    analyze_video(args.path)

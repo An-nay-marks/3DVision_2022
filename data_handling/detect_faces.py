@@ -3,18 +3,18 @@ from unittest.mock import patch
 import onnxruntime
 import time
 import cv2
-from utils import ROOT_DIR
+from utils_3DV import ROOT_DIR, DETECTORS
 
 from detection import scrfd, yolo5
 
 
-def face_detection(video_path, target_path=None, model="scrfd"):
+def face_detection(video_path, target_path=None, detector="scrfd"):
     """Extract patches, detected as faces from the video. If target_path is not specified, patches will not be saved, but only returned.
 
     Args:
         video_path (string): Video Path starting from ROOT directory
         target_path (string, optional): Video Path starting from ROOT directory. If nto specified, patches will not be saved as images.
-        model (str, optional): the face detector model to use. Defaults to "scrfd".
+        detector (str, optional): the face detector model to use. Defaults to "scrfd".
 
     Raises:
         RuntimeError: See error message
@@ -22,8 +22,8 @@ def face_detection(video_path, target_path=None, model="scrfd"):
     Returns:
         list: list of extracted patches
     """
-    if model not in ["scrfd", "yolo5"]:
-        raise RuntimeError(f"{model} is not a valid face detector")
+    if detector not in DETECTORS:
+        raise RuntimeError(f"{detector} is not a valid face detector")
     video_path = f"{ROOT_DIR}/{video_path}"
     capture = cv2.VideoCapture(video_path)
     target = target_path
@@ -39,7 +39,7 @@ def face_detection(video_path, target_path=None, model="scrfd"):
     fps = capture.get(cv2.CAP_PROP_FPS)
     frame_delay = max(1.0, 1000 / fps)
 
-    detector = scrfd.SCRFaceDetector(f'{ROOT_DIR}/data/model_files/scrfd_34g.onnx') if model=="scrfd" else yolo5.YOLOv5FaceDetector(f'{ROOT_DIR}/data/model_files/yolov5l.pt')
+    detector = scrfd.SCRFaceDetector(f'{ROOT_DIR}/data/model_files/scrfd_34g.onnx') if detector=="scrfd" else yolo5.YOLOv5FaceDetector(f'{ROOT_DIR}/data/model_files/yolov5l.pt')
     ''' providers = (['CUDAExecutionProvider', 'CPUExecutionProvider'])
     so = onnxruntime.SessionOptions()
     so.inter_op_num_threads = 4
@@ -80,7 +80,7 @@ def face_detection(video_path, target_path=None, model="scrfd"):
         key = cv2.waitKey(delay)
 
         t1 = time.time_ns()
-        cv2.imshow(file_name, frame)
+        # cv2.imshow(file_name, frame)
 
         valid, frame = capture.read()
 

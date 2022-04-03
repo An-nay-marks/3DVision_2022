@@ -1,9 +1,9 @@
-[submodule "insightface"]
-	path = insightface
+[submodule "detection/insightface"]
+	path = detection/insightface
 	url = https://github.com/deepinsight/insightface.git
-[submodule "yolo5_face"]
-	path = yolo5_face
+[submodule "detection/yolo5_face"]
+	path = detection/yolo5_face
 	url = https://github.com/deepcam-cn/yolov5-face
-[submodule "DECA"]
-	path = DECA
+[submodule "reconstruction/DECA"]
+	path = reconstruction/DECA
 	url = https://github.com/YadiraF/DECA.git

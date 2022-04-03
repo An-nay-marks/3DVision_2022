@@ -26,3 +26,6 @@ zipp==3.7.0
 opencv-contrib-python
 onnxruntime
 keras_vggface
+onnx
+pandas
+seaborn
