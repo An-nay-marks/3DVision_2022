@@ -45,7 +45,7 @@ def analyze_video(video_path):
 
     deca_file = 'model_files/deca_model.tar'
     flame_file = 'model_files/generic_model.pkl'
-    albedo_file = None
+    albedo_file = 'model_files/FLAME_albedo_from_BFM.npz'
     deca = DECAReconstruction(deca_file, flame_file, albedo_file)
 
     key = cv2.waitKey(1)
@@ -68,12 +68,12 @@ def analyze_video(video_path):
                 encoding = encoder.encode(face_patch)
                 identity = identifier.get_identity(encoding)
 
-                opdict = deca.reconstruct(face_patch)
+                op_dict = deca.reconstruct(face_patch)
                 face_nr = identifier.identities[identity].num_encodings
-                obj_name = f'frame_{face_nr}'
-                obj_dir = os.path.join(out_directory, f'id_{identity}', obj_name)
+                obj_name = f'patch_{face_nr}'
+                obj_dir = os.path.join(out_directory, f'id_{identity+1}', obj_name)
                 os.makedirs(obj_dir, exist_ok=True)
-                deca.save_obj(os.path.join(obj_dir, f'{obj_name}.obj'), opdict)
+                deca.save_obj(os.path.join(obj_dir, f'{obj_name}.obj'), op_dict)
 
             name = f'Person {identity + 1}'
             font = cv2.FONT_HERSHEY_DUPLEX
