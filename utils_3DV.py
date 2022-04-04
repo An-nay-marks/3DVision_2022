@@ -4,6 +4,7 @@ import os
 # global constants
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DETECTORS = ["scrfd", "yolo5"]
+CLASSIFIERS = ["similarity", "vgg"]
 #usefull helper function
 def get_current_datetime_as_str():
     return "{:%Y_%m_%d_%H_%M}".format(datetime.now())

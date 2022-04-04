@@ -26,7 +26,7 @@ def face_detection(video_path, target_path=None, detector="scrfd", required_size
     video_path = f"{ROOT_DIR}/{video_path}"
     capture = cv2.VideoCapture(video_path)
     target = target_path
-    if not os.path.exists(target) and target is not None:
+    if target is not None and not os.path.exists(target):
         os.mkdir(target)
     image_id = 0
     valid, frame = capture.read()
@@ -51,7 +51,7 @@ def face_detection(video_path, target_path=None, detector="scrfd", required_size
     key = cv2.waitKey(1)
     t1 = time.time_ns()
     images = []
-
+    frame_number = 0
     while valid and key & 0xFF != ord('q'):
         bboxes = detector.detect(frame)
 
@@ -82,7 +82,9 @@ def face_detection(video_path, target_path=None, detector="scrfd", required_size
 
         t1 = time.time_ns()
         # cv2.imshow(file_name, frame)
-
+        if frame_number > 200:
+            break
+        frame_number += 1
         valid, frame = capture.read()
 
     capture.release()

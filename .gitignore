@@ -2,6 +2,7 @@ datasets/*
 zzz_tests.py
 data/videos/*
 data/images/*
+detection/insightface/python-package/insightface/data/*
 
 
 

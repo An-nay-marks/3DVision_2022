@@ -1,4 +1,5 @@
-from recognition import face_identifier
+from recognition import face_identifier, vgg
+import cv2
 
 def classify_faces(encodings, threshold=0.3):
     """Face classification/identification
@@ -16,3 +17,15 @@ def classify_faces(encodings, threshold=0.3):
         identity = identifier.get_identity(code)
         identities.append(identity)
     return (identities, identifier)
+
+
+def classify_vgg(images, threshold=0.3):
+    # Example of face detection with a vggface2 model
+    classifications = []
+    classifier = vgg.VGGEncoderAndClassifier(threshold)
+    
+    for img in images:
+        # highest scored name and probability
+        classifications.append(classifier.classify(img))
+    print(classifications)
+    return classifications

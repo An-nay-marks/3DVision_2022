@@ -4,15 +4,17 @@ import cv2
 import shutil
 import time
 import cv2
-from utils_3DV import ROOT_DIR
+from utils_3DV import CLASSIFIERS, DETECTORS, ROOT_DIR
 from detection import scrfd, yolo5
-from recognition import arcface, face_identifier
+from recognition import arcface, face_identifier, vgg
 from reconstruction.deca import DECAReconstruction
 from data_handling.detect_faces import pad_face
 
-def run_online_pipeline(video_path, detector = "scrfd"):
-    if detector not in ["scrfd", "yolo5"]:
+def run_online_pipeline(video_path, detector = "scrfd", classifier = "similarity"):
+    if detector not in DETECTORS:
         raise RuntimeError(f"{detector} is not a valid face detector")
+    if classifier not in CLASSIFIERS:
+        raise RuntimeError(f"{classifier} is not a valid face classidier")
     capture = cv2.VideoCapture(video_path)
     valid, frame = capture.read()
 
@@ -24,13 +26,17 @@ def run_online_pipeline(video_path, detector = "scrfd"):
     frame_time = max(1.0, 1000 / fps)
 
     detector = scrfd.SCRFaceDetector(f'{ROOT_DIR}/data/model_files/scrfd_34g.onnx') if detector=="scrfd" else yolo5.YOLOv5FaceDetector(f'{ROOT_DIR}/data/model_files/yolov5l.pt')
-    encoder = arcface.ArcFaceR100(f'{ROOT_DIR}/data/model_files/arcface_r100.pth')
-    identifier = face_identifier.FaceIdentifier(threshold=0.3)
+    if classifier == "similarity":
+        encoder = arcface.ArcFaceR100(f'{ROOT_DIR}/data/model_files/arcface_r100.pth')
+        identifier = face_identifier.FaceIdentifier(threshold=0.3)
+    elif classifier == "vgg":
+        identifier = vgg.VGGEncoderAndClassifier(threshold=0.3)
 
-    deca_file = f'{ROOT_DIR}/data/model_files/deca_model.tar'
+    '''deca_file = f'{ROOT_DIR}/data/model_files/deca_model.tar'
     flame_file = f'{ROOT_DIR}/data/model_files/generic_model.pkl'
     albedo_file = f'{ROOT_DIR}/data/model_files/FLAME_albedo_from_BFM.npz'
     deca = DECAReconstruction(deca_file, flame_file, albedo_file)
+    '''
 
     key = cv2.waitKey(1)
     t1 = time.time_ns()
@@ -46,20 +52,29 @@ def run_online_pipeline(video_path, detector = "scrfd"):
         for i, face in enumerate(bboxes):
             left, top, right, bottom = pad_face(frame, *face[:-1].astype(int))
             identity = -1
+            name = "unimportant side character"
 
             if min(bottom-top, right-left) > 110:
                 face_patch = frame[top:bottom+1, left:right+1]
-                encoding = encoder.encode(face_patch)
-                identity = identifier.get_identity(encoding)
+                if classifier == "similarity":
+                    encoding = encoder.encode(face_patch)
+                    identity = identifier.get_identity(encoding)
 
-                op_dict = deca.reconstruct(face_patch)
-                face_nr = identifier.identities[identity].num_encodings
-                obj_name = f'patch_{face_nr}'
-                obj_dir = os.path.join(out_directory, f'id_{identity+1}', obj_name)
-                os.makedirs(obj_dir, exist_ok=True)
-                deca.save_obj(os.path.join(obj_dir, f'{obj_name}.obj'), op_dict)
+                    '''op_dict = deca.reconstruct(face_patch)
+                    face_nr = identifier.identities[identity].num_encodings
+                    obj_name = f'patch_{face_nr}'
+                    obj_dir = os.path.join(out_directory, f'id_{identity+1}', obj_name)
+                    os.makedirs(obj_dir, exist_ok=True)
+                    deca.save_obj(os.path.join(obj_dir, f'{obj_name}.obj'), op_dict)
+                    '''
+                    name = f'Person {identity + 1}'
+                elif classifier == "vgg":
+                    identity = identifier.classify(face_patch)
+                    if identity[0]!= -1:
+                        name = identity[0].split(' ')[1]
+                    
 
-            name = f'Person {identity + 1}'
+            
             font = cv2.FONT_HERSHEY_DUPLEX
             cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
             if identity != -1:
