@@ -1,6 +1,4 @@
 import os
-from unittest.mock import patch
-import onnxruntime
 import time
 import cv2
 from utils_3DV import ROOT_DIR, DETECTORS
@@ -8,13 +6,14 @@ from utils_3DV import ROOT_DIR, DETECTORS
 from detection import scrfd, yolo5
 
 
-def face_detection(video_path, target_path=None, detector="scrfd"):
+def face_detection(video_path, target_path=None, detector="scrfd", required_size = None):
     """Extract patches, detected as faces from the video. If target_path is not specified, patches will not be saved, but only returned.
 
     Args:
         video_path (string): Video Path starting from ROOT directory
         target_path (string, optional): Video Path starting from ROOT directory. If nto specified, patches will not be saved as images.
         detector (str, optional): the face detector model to use. Defaults to "scrfd".
+        required_size (int, optional): The required patch size, if specified, otherwise different resolutions containing tight faces will be output
 
     Raises:
         RuntimeError: See error message
@@ -57,22 +56,24 @@ def face_detection(video_path, target_path=None, detector="scrfd"):
         bboxes = detector.detect(frame)
 
         for i, face in enumerate(bboxes):
-            left, top, right, bottom = pad_face(frame, *face[:-1].astype(int))
+            if required_size is not None:
+                left, top, right, bottom = get_fixed_patch_size(frame, required_size, *face[:-1].astype(int))
+            else: 
+                left, top, right, bottom = pad_face(frame, *face[:-1].astype(int))
             name = f'Person {i+1}'
             font = cv2.FONT_HERSHEY_DUPLEX
             if min(bottom-top, right-left) > 110:
                 face_patch = frame[top:bottom+1, left:right+1]
                 name = f'Person {i+1}'
-                font = cv2.FONT_HERSHEY_DUPLEX
+                font = cv2.FONT_HERSHEY_DUPLEX                
+                if target_path is not None:
+                    # save face patch
+                    file_name = f"{target_path}/{image_id}.png"
+                    image_id+=1
+                    cv2.imwrite(filename=file_name, img=face_patch)
+                images.append(face_patch)
                 cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
                 cv2.putText(frame, name, (left, bottom + 25), font, 1.0, (255, 255, 255), 1)
-                if min(bottom-top, right-left) > 110:
-                    if target_path is not None:
-                        # save face patch
-                        file_name = f"{target_path}/{image_id}.png"
-                        image_id+=1
-                        cv2.imwrite(filename=file_name, img=face_patch)
-                    images.append(face_patch)
 
         t2 = time.time_ns()
         processing_delay = (t2 - t1) / 1e6
@@ -98,3 +99,30 @@ def pad_face(img, left, top, right, bottom):
     top = max(0, top - pad_y)
     bottom = min(img.shape[0], bottom + pad_y)
     return left, top, right, bottom
+
+def get_fixed_patch_size(img, required_size, left, top, right, bottom):
+    req = required_size
+    center_x = left + round((right-left)/2)
+    center_y = top + round((bottom-top)/2)
+    left_from_center = req//2
+    right_from_center = req//2 if (req%2==0) else req//2+1
+    top_from_center = req//2
+    bottom_from_center = req//2 if (req%2==0) else req//2+1
+    if center_x-left_from_center < 0:
+        center_x -= center_x-left_from_center
+    elif right_from_center+center_x > img.shape[1]:
+        center_x -= img.shape[1]-(right_from_center+center_x)
+    if center_y-top_from_center < 0:
+        center_y -= center_y-top_from_center
+    elif bottom_from_center+center_y > img.shape[0]:
+        center_y -= img.shape[0]-(bottom_from_center+center_y)
+    left = center_x - left_from_center
+    right = center_x + right_from_center
+    top = center_y - top_from_center
+    bottom = center_y + bottom_from_center
+    return left, top, right, bottom
+    
+        
+        
+    
+    

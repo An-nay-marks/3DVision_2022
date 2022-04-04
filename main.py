@@ -25,7 +25,8 @@ if __name__ == '__main__':
         specific_parser.add_argument('-v', '--video_path', type=str, help="Video Path where the video to be analyzed can be found at, starting at project root folder")
         specific_parser.add_argument('-t', '--target_path', type=str, help="Target Path, where the detected images are saved in. Defaults to None, if they shouldn't be saved", default=None)
         specific_parser.add_argument('-d', '--detector', type=str, help="Detector Model, default is scrfd. Currently available Detectors: ".format(DETECTORS), default="scrfd")
-        filter_args = ["video_path", "target_path", "detector"]
+        specific_parser.add_argument('-r', '--required_size', type=int, help="Patch size output (Tuple(int,int)), if specific size is required. Defaults to None, if patch size is neglectable", default=None)
+        filter_args = ["video_path", "target_path", "detector", "required_size"]
     elif args.function.lower() == 'online_pipeline':
         specific_parser.add_argument('-v', '--video_path', type=str, help="Video Path where the video to be analyzed can be found at, starting at project root folder")
         specific_parser.add_argument('-d', '--detector', type=str, help="Detector Model, default is scrfd. Currently available Detectors: ".format(DETECTORS), default="scrfd")
