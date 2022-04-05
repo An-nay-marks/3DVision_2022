@@ -4,9 +4,9 @@ import cv2
 import numpy as np
 import torch
 
-sys.path.append('detection/yolo5_face')
+sys.path.append('dependencies/yolo5_face')
 
-from .yolo5_face import detect_face as yolo5
+from dependencies.yolo5_face import detect_face as yolo5
 
 
 class YOLOv5FaceDetector:

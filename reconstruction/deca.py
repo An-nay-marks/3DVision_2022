@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 import torch
 import sys
-from .DECA.decalib.deca import DECA
-from .DECA.decalib.utils import config
+from dependencies.DECA.decalib.deca import DECA
+from dependencies.DECA.decalib.utils import config
 '''
 class DECAReconstruction:
     def __init__(self):

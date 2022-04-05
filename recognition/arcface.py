@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import torch
 
-from detection.insightface.recognition.arcface_torch.backbones import get_model
+from dependencies.insightface.recognition.arcface_torch.backbones import get_model
 
 
 class ArcFace:
