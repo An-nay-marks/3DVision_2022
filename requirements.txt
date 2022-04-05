@@ -19,7 +19,7 @@ face-recognition-models==0.3.0
 importlib-metadata==4.11.3
 numpy
 opencv-python==4.5.5.64
-Pillow==9.0.1
+Pillow==6.0.1
 typing_extensions==4.1.1
 wincertstore==0.2
 zipp==3.7.0
@@ -29,3 +29,4 @@ keras_vggface
 onnx
 pandas
 seaborn
+sklearn

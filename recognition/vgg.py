@@ -21,4 +21,4 @@ class VGGEncoderAndClassifier():
             print(class_code[0])
             return -1,-1
         # highest scored name and probability
-        return class_code[0][0][0], class_code[0][0][1]
+        return class_code[0][0][0].split(' ')[1], class_code[0][0][1]

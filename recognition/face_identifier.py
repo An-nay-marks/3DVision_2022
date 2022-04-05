@@ -4,11 +4,13 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.linalg import norm
 
+from sklearn.cluster import MeanShift
+
 
 @dataclass
 class Identity:
     num_encodings: int = 0
-    mean_encoding: np.array = np.zeros(512)
+    mean_encoding: np.array = 0
 
     def add_encoding(self, enc):
         n = self.num_encodings + 1
@@ -16,7 +18,7 @@ class Identity:
         self.num_encodings = n
 
 
-class FaceIdentifier:
+class RealTimeFaceIdentifier:
     def __init__(self, threshold):
         self.identities: List[Identity] = []
         self.threshold: float = threshold
@@ -42,3 +44,23 @@ class FaceIdentifier:
 
         self.identities[detected_id].add_encoding(encoding)
         return detected_id
+
+
+class OfflineFaceIdentifier:
+    """Uses Mean Shift to get clusters of identities, based on the facial encoding
+    """
+    
+    def get_identities(self, encodings):
+        """performs mean shift
+
+        Args:
+            encodings (list): encodings as a list of codes
+
+        Returns:
+            tuple(list, list, list): 
+        """
+        ms = MeanShift()
+        labels = ms.fit_predict(encodings)
+        labels_unique = np.unique(labels)
+        cluster_centers = ms.cluster_centers_
+        return labels_unique.tolist(), cluster_centers.tolist(), labels.tolist()

@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import torch
+import sys
 from .DECA.decalib.deca import DECA
 from .DECA.decalib.utils import config
 '''
@@ -8,7 +9,7 @@ class DECAReconstruction:
     def __init__(self):
         pass
 '''
-
+sys.path.append('recognition/DECA')
 class DECAReconstruction(DECA):
     def __init__(self, deca_file, flame_file, albedo_file=None):
         device_name = "cuda" if torch.cuda.is_available() else "cpu"

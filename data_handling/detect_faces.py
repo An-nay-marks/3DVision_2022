@@ -1,7 +1,7 @@
 import os
-import time
 import cv2
 from utils_3DV import ROOT_DIR, DETECTORS
+from tqdm import tqdm
 
 from detection import scrfd, yolo5
 
@@ -47,48 +47,38 @@ def face_detection(video_path, target_path=None, detector="scrfd", required_size
     # session = onnxruntime.InferenceSession(model_file, providers)
     detector = scrfd.SCRFD(model_file, session)
     detector.prepare(0, input_size=(640, 640))'''
-
-    key = cv2.waitKey(1)
-    t1 = time.time_ns()
     images = []
     frame_number = 0
-    while valid and key & 0xFF != ord('q'):
+    length = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    for i in tqdm(range(length)):
+        # use to skip some frames
+        '''if frame_number < 120:
+            valid, frame = capture.read()
+            frame_number += 1
+            continue
+        elif frame_number > 160:
+            break '''
+        if not valid:
+            break
+        
         bboxes = detector.detect(frame)
-
-        for i, face in enumerate(bboxes):
+        for face in bboxes:
             if required_size is not None:
                 left, top, right, bottom = get_fixed_patch_size(frame, required_size, *face[:-1].astype(int))
             else: 
                 left, top, right, bottom = pad_face(frame, *face[:-1].astype(int))
-            name = f'Person {i+1}'
-            font = cv2.FONT_HERSHEY_DUPLEX
             if min(bottom-top, right-left) > 110:
-                face_patch = frame[top:bottom+1, left:right+1]
-                name = f'Person {i+1}'
-                font = cv2.FONT_HERSHEY_DUPLEX                
+                face_patch = frame[top:bottom+1, left:right+1]     
                 if target_path is not None:
                     # save face patch
                     file_name = f"{target_path}/{image_id}.png"
                     image_id+=1
                     cv2.imwrite(filename=file_name, img=face_patch)
                 images.append(face_patch)
-                cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
-                cv2.putText(frame, name, (left, bottom + 25), font, 1.0, (255, 255, 255), 1)
-
-        t2 = time.time_ns()
-        processing_delay = (t2 - t1) / 1e6
-        delay = max(1, round(frame_delay - processing_delay))
-        key = cv2.waitKey(delay)
-
-        t1 = time.time_ns()
-        # cv2.imshow(file_name, frame)
-        if frame_number > 200:
-            break
         frame_number += 1
         valid, frame = capture.read()
 
     capture.release()
-    cv2.destroyAllWindows()
     return images
     
 def pad_face(img, left, top, right, bottom):
