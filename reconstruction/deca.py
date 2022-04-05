@@ -1,10 +1,13 @@
 import cv2
 import numpy as np
 import torch
-
-from DECA.decalib.deca import DECA
-from DECA.decalib.utils import config
-
+from .DECA.decalib.deca import DECA
+from .DECA.decalib.utils import config
+'''
+class DECAReconstruction:
+    def __init__(self):
+        pass
+'''
 
 class DECAReconstruction(DECA):
     def __init__(self, deca_file, flame_file, albedo_file=None):
@@ -30,4 +33,3 @@ class DECAReconstruction(DECA):
         codedict = super().encode(img)
         opdict, visdict = super().decode(codedict)
         return opdict
-

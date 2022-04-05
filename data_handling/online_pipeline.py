@@ -31,12 +31,13 @@ def run_online_pipeline(video_path, detector = "scrfd", classifier = "similarity
         identifier = face_identifier.FaceIdentifier(threshold=0.3)
     elif classifier == "vgg":
         identifier = vgg.VGGEncoderAndClassifier(threshold=0.3)
-
-    '''deca_file = f'{ROOT_DIR}/data/model_files/deca_model.tar'
-    flame_file = f'{ROOT_DIR}/data/model_files/generic_model.pkl'
-    albedo_file = f'{ROOT_DIR}/data/model_files/FLAME_albedo_from_BFM.npz'
-    deca = DECAReconstruction(deca_file, flame_file, albedo_file)
-    '''
+    
+    if classifier == "similarity":
+        # deca currently not supported for vgg
+        deca_file = f'{ROOT_DIR}/data/model_files/deca_model.tar'
+        flame_file = f'{ROOT_DIR}/data/model_files/generic_model.pkl'
+        albedo_file = f'{ROOT_DIR}/data/model_files/FLAME_albedo_from_BFM.npz'
+        deca = DECAReconstruction(deca_file, flame_file, albedo_file)
 
     key = cv2.waitKey(1)
     t1 = time.time_ns()
