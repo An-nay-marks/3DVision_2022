@@ -1,18 +1,7 @@
-datasets/*
+datasets/
 zzz_tests.py
-data/videos/*
-data/images/*
-data/reconstructions/*
-data/model_files/deca_model.tar
-data/model_files/FLAME_albedo_from_BFM.npz
-data/model_files/generic_model.pkl
-detection/insightface/python-package/insightface/data/*
-detection/insightface/recognition/arcface_paddle/test_tipc/data/*
-dependencies/*
-
-
-
-
+data/
+dependencies/
 
 #################Other Stuff auto-created by git #####################
 # Byte-compiled / optimized / DLL files
