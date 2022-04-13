@@ -1,16 +1,12 @@
 import cv2
 import numpy as np
 import torch
-import sys
+
 from dependencies.DECA.decalib.deca import DECA
 from dependencies.DECA.decalib.utils import config
-'''
-class DECAReconstruction:
-    def __init__(self):
-        pass
-'''
-sys.path.append('recognition/DECA')
-class DECAReconstruction(DECA):
+
+
+class DECAFaceReconstruction(DECA):
     def __init__(self, deca_file, flame_file, albedo_file=None):
         device_name = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -31,6 +27,6 @@ class DECAReconstruction(DECA):
         img = torch.from_numpy(img).unsqueeze(0).float().to(self.device)
         img.div_(255)
 
-        codedict = super().encode(img)
-        opdict, visdict = super().decode(codedict)
-        return opdict
+        code_dict = super().encode(img)
+        op_dict, _ = super().decode(code_dict)
+        return op_dict

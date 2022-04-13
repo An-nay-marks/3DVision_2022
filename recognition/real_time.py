@@ -1,13 +1,9 @@
-from typing import List
-from dataclasses import dataclass
-
 import numpy as np
+
+from typing import List
 from numpy.linalg import norm
 
-from sklearn.cluster import MeanShift
 
-
-@dataclass
 class Identity:
     num_encodings: int = 0
     mean_encoding: np.array = 0
@@ -19,20 +15,22 @@ class Identity:
 
 
 class RealTimeFaceIdentifier:
-    def __init__(self, threshold):
+    def __init__(self, encoder, threshold):
         self.identities: List[Identity] = []
+        self.encoder = encoder
         self.threshold: float = threshold
 
     @staticmethod
-    def face_similarity(enc1, enc2):
+    def _face_similarity(enc1, enc2):
         return enc1 @ enc2 / (norm(enc1) * norm(enc2))
 
-    def get_identity(self, encoding):
+    def classify(self, img):
         detected_id = -1
         max_similarity = self.threshold
+        encoding = self.encoder.encode(img)
 
         for i, identity in enumerate(self.identities):
-            sim = self.face_similarity(encoding, identity.mean_encoding)
+            sim = self._face_similarity(encoding, identity.mean_encoding)
 
             if sim > max_similarity:
                 detected_id = i
@@ -45,22 +43,12 @@ class RealTimeFaceIdentifier:
         self.identities[detected_id].add_encoding(encoding)
         return detected_id
 
+    @staticmethod
+    def get_name(identity):
+        return f'id_{identity + 1}'
 
-class OfflineFaceIdentifier:
-    """Uses Mean Shift to get clusters of identities, based on the facial encoding
-    """
-    
-    def get_identities(self, encodings):
-        """performs mean shift
+    def get_num_samples(self, identity):
+        if identity >= len(self.identities):
+            return 0
 
-        Args:
-            encodings (list): encodings as a list of codes
-
-        Returns:
-            tuple(list, list, list): 
-        """
-        ms = MeanShift()
-        labels = ms.fit_predict(encodings)
-        labels_unique = np.unique(labels)
-        cluster_centers = ms.cluster_centers_
-        return labels_unique.tolist(), cluster_centers.tolist(), labels.tolist()
+        return self.identities[identity].num_encodings
