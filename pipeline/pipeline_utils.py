@@ -1,5 +1,7 @@
 import os
 
+import cv2
+
 
 def pad_face(img, left, top, right, bottom):
     factor = 0.35
@@ -23,3 +25,27 @@ def create_id_export_dir(target_dir, name):
     sample_dir = os.path.join(target_dir, name)
     os.makedirs(sample_dir, exist_ok=True)
     return sample_dir
+
+
+def load_raw_patches(path):
+    patches = []
+    for directory in os.listdir(path):
+        dir_path = os.path.join(path, directory)
+        for file in os.listdir(dir_path):
+            file_path = os.path.join(dir_path, file)
+            patches.append(cv2.imread(file_path))
+    return patches
+
+
+def load_classified_patches(path):
+    patches = []
+    identities = []
+
+    for identity in os.listdir(path):
+        dir_path = os.path.join(path, identity)
+        for file in os.listdir(dir_path):
+            file_path = os.path.join(dir_path, file)
+            patches.append(cv2.imread(file_path))
+            identities.append(identity)
+
+    return patches, identities

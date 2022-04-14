@@ -1,7 +1,5 @@
-import argparse
-
+from utils_3DV import *
 from detection import scrfd, yolo5
-from utils_3DV import DETECTORS, ROOT_DIR, get_default_parser, get_default_objects
 from pipeline import online_pipeline, offline_pipeline
 
 
@@ -28,13 +26,14 @@ def initialize_detector(model):
         return None
 
 
-def run_detection(video_provider, target_dir, online, specific_args):
+def run_detection(source, target_dir, online, specific_args):
     online_status = 'online' if online else 'offline'
     print(f'Running {online_status} detection pipeline')
 
+    provider = initialize_video_provider(source)
     detector = initialize_detector(specific_args.detector)
     pipeline = online_pipeline if online else offline_pipeline
-    pipeline.run(video_provider, target_dir, detector)
+    pipeline.run(provider, target_dir, detector)
 
 
 def main(default_args):
