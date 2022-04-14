@@ -45,7 +45,7 @@ def run_classification(source, target_dir, online, specific_args):
 
     classifier = initialize_classifier(specific_args.classifier)
     pipeline = online_pipeline if online else offline_pipeline
-    pipeline.run(data_src, target_dir, detector, classifier)
+    pipeline.run(data_src, target_dir, specific_args.patch_size, detector, classifier)
 
 
 def main(default_args):

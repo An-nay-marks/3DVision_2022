@@ -1,11 +1,10 @@
 import time
-import cv2
 
-from utils_3DV import init_dir
 from pipeline.pipeline_utils import *
+from utils_3DV import init_dir
 
 
-def run(provider, target_dir, detector, classifier=None, deca=None):
+def run(provider, target_dir, export_size, detector, classifier=None, deca=None):
     init_dir(target_dir)
     valid, frame = provider.read()
 
@@ -44,6 +43,8 @@ def run(provider, target_dir, detector, classifier=None, deca=None):
                 sample_name = f'patch_{classifier.get_num_samples(identity)}'
 
                 if deca is None:
+                    if export_size is not None:
+                        face_patch = cv2.resize(face_patch, export_size)
                     cv2.imwrite(os.path.join(sample_dir, f'patch_{face_idx + 1}.jpg'), face_patch)
                 else:
                     reconstruction = deca.reconstruct(face_patch)

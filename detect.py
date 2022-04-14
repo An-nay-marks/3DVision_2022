@@ -33,7 +33,7 @@ def run_detection(source, target_dir, online, specific_args):
     provider = initialize_video_provider(source)
     detector = initialize_detector(specific_args.detector)
     pipeline = online_pipeline if online else offline_pipeline
-    pipeline.run(provider, target_dir, detector)
+    pipeline.run(provider, target_dir, specific_args.patch_size, detector)
 
 
 def main(default_args):
