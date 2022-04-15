@@ -167,4 +167,3 @@ dependencies:
     - yapf==0.32.0
     - zict==2.1.0
     - zipp==3.8.0
-prefix: C:\Users\lweit\miniconda3\envs\3DVision_2022
