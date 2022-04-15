@@ -37,7 +37,7 @@ def run_reconstruction(source, target_dir, online, specific_args):
 
     deca = initialize_deca()
     pipeline = online_pipeline if online else offline_pipeline
-    pipeline.run(data_src, target_dir, specific_args.patch_size, detector, classifier, deca)
+    pipeline.run(data_src, target_dir, None, detector, classifier, deca)
 
 
 def main(default_args):
