@@ -15,6 +15,13 @@ def pad_face(img, left, top, right, bottom):
     return left, top, right, bottom
 
 
+def resize_face(img, export_size):
+    if export_size is None:
+        return img
+
+    return cv2.resize(img, export_size)
+
+
 def create_anonymous_export_dir(target_dir, frame_idx):
     sample_dir = os.path.join(target_dir, f'frame_{frame_idx + 1}')
     os.makedirs(sample_dir, exist_ok=True)

@@ -7,13 +7,13 @@ def get_detection_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--detector', choices=DETECTORS, default=DETECTORS[0],
                         help=f'Detector Model, default is {DETECTORS[0]}.')
+    parser.add_argument('--patch-size', type=int, nargs=2,
+                        help='Patch size output (width, height), if specific size is required.')
     return parser
 
 
 def parse_args():
     parser = get_detection_parser()
-    parser.add_argument('--patch-size', type=int, nargs=2,
-                        help='Patch size output (width, height), if specific size is required.')
     return parser.parse_known_args()[0]
 
 

@@ -7,7 +7,7 @@ from sklearn.neighbors import NearestNeighbors
 
 class MeanShiftFaceIdentifier(MeanShift):
     def __init__(self, encoder):
-        super().__init__()
+        super().__init__(n_jobs=-1)
         self.encoder = encoder
 
     def classify_all(self, faces):

@@ -5,7 +5,9 @@ from utils_3DV import init_dir
 
 
 def run(provider, target_dir, export_size, detector, classifier=None, deca=None):
-    init_dir(target_dir)
+    if not init_dir(target_dir):
+        return
+
     valid, frame = provider.read()
 
     if not valid:
@@ -33,6 +35,7 @@ def run(provider, target_dir, export_size, detector, classifier=None, deca=None)
 
             if classifier is None:
                 sample_dir = create_anonymous_export_dir(target_dir, frame_idx)
+                face_patch = resize_face(face_patch, export_size)
                 cv2.imwrite(os.path.join(sample_dir, f'patch_{face_idx + 1}.jpg'), face_patch)
             else:
                 identity = classifier.classify(face_patch)
@@ -43,8 +46,7 @@ def run(provider, target_dir, export_size, detector, classifier=None, deca=None)
                 sample_name = f'patch_{classifier.get_num_samples(identity)}'
 
                 if deca is None:
-                    if export_size is not None:
-                        face_patch = cv2.resize(face_patch, export_size)
+                    face_patch = resize_face(face_patch, export_size)
                     cv2.imwrite(os.path.join(sample_dir, f'patch_{face_idx + 1}.jpg'), face_patch)
                 else:
                     reconstruction = deca.reconstruct(face_patch)

@@ -2,6 +2,7 @@
 import argparse
 import cv2
 import os
+import sys
 import shutil
 
 from datetime import datetime
@@ -43,5 +44,13 @@ def get_current_datetime_as_str():
 
 def init_dir(target_dir):
     if os.path.exists(target_dir):
+        print(f'Target directory \"{target_dir}\" already exists and will be overwritten.')
+        print('Do you want to proceed (y/n)?')
+        while (response := sys.stdin.readline().rstrip()) not in ['n', 'y']:
+            print('Invalid response. Specify \'y\' (yes) or \'n\' (no).')
+        if response != 'y':
+            return False
         shutil.rmtree(target_dir)
+
     os.makedirs(target_dir)
+    return True

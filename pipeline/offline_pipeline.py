@@ -6,7 +6,8 @@ from pipeline.pipeline_utils import *
 
 
 def run(source, target_dir, export_size, detector, classifier=None, deca=None):
-    init_dir(target_dir)
+    if not init_dir(target_dir):
+        return
 
     if detector is None and classifier is None:
         faces, identities = load_classified_patches(source)
@@ -31,10 +32,7 @@ def run(source, target_dir, export_size, detector, classifier=None, deca=None):
 
                     if classifier is None:
                         sample_dir = create_anonymous_export_dir(target_dir, frame_idx)
-
-                        if export_size is not None:
-                            face_patch = cv2.resize(face_patch, export_size)
-
+                        face_patch = resize_face(face_patch, export_size)
                         cv2.imwrite(os.path.join(sample_dir, f'patch_{face_idx + 1}.jpg'), face_patch)
                     else:
                         faces.append(face_patch)
@@ -57,6 +55,7 @@ def run(source, target_dir, export_size, detector, classifier=None, deca=None):
         sample_dir = create_id_export_dir(target_dir, name)
 
         if deca is None:
+            patch = resize_face(patch, export_size)
             cv2.imwrite(os.path.join(sample_dir, f'patch_{face_idx + 1}.jpg'), patch)
         else:
             reconstruction = deca.reconstruct(patch)
