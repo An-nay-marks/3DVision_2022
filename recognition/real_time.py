@@ -20,17 +20,13 @@ class RealTimeFaceIdentifier:
         self.encoder = encoder
         self.threshold: float = threshold
 
-    @staticmethod
-    def _face_similarity(enc1, enc2):
-        return enc1 @ enc2 / (norm(enc1) * norm(enc2))
-
     def classify(self, img):
         detected_id = -1
         max_similarity = self.threshold
         encoding = self.encoder.encode(img)
 
         for i, identity in enumerate(self.identities):
-            sim = self._face_similarity(encoding, identity.mean_encoding)
+            sim = self.encoder.similarity(encoding, identity.mean_encoding)
 
             if sim > max_similarity:
                 detected_id = i

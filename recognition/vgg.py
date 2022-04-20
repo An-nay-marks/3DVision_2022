@@ -21,13 +21,11 @@ class VGGFaceClassifier:
         img = cv2.resize(img, (224, 224))
         img = expand_dims(img, axis=0)
         sample = preprocess_input(img, version=2)
-        class_code = decode_predictions(self.classifier.predict(sample))
-        if class_code[0][0][1] < self.threshold:
+        class_code = decode_predictions(self.classifier.predict(sample))[0][0]
+        if class_code[1] < self.threshold:
             return -1
 
-        # highest scored name and probability
-        # class_code[0][0][1][0]
-        identity = class_code[0][0][0][3:-1]
+        identity = class_code[0][3:-1]
         if identity not in self.sample_count:
             self.sample_count[identity] = 0
 

@@ -1,8 +1,7 @@
 import numpy as np
 
-from tqdm import tqdm
-from utils_3DV import *
 from pipeline.pipeline_utils import *
+from utils_3DV import *
 
 
 def run(source, target_dir, export_size, detector, classifier=None, deca=None):
@@ -10,9 +9,11 @@ def run(source, target_dir, export_size, detector, classifier=None, deca=None):
         return
 
     if detector is None and classifier is None:
+        print("Loading classified patches...")
         faces, identities = load_classified_patches(source)
     else:
         if detector is None:
+            print("Loading unclassified patches...")
             faces = load_raw_patches(source)
         else:
             print("Detecting faces...")

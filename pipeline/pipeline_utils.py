@@ -1,6 +1,7 @@
 import os
-
 import cv2
+
+from tqdm import tqdm
 
 
 def pad_face(img, left, top, right, bottom):
@@ -36,7 +37,7 @@ def create_id_export_dir(target_dir, name):
 
 def load_raw_patches(path):
     patches = []
-    for directory in os.listdir(path):
+    for directory in tqdm(os.listdir(path)):
         dir_path = os.path.join(path, directory)
         for file in os.listdir(dir_path):
             file_path = os.path.join(dir_path, file)
@@ -48,7 +49,7 @@ def load_classified_patches(path):
     patches = []
     identities = []
 
-    for identity in os.listdir(path):
+    for identity in tqdm(os.listdir(path)):
         dir_path = os.path.join(path, identity)
         for file in os.listdir(dir_path):
             file_path = os.path.join(dir_path, file)

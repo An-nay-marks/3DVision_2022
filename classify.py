@@ -1,12 +1,12 @@
 from utils_3DV import *
 from pipeline import online_pipeline, offline_pipeline
 from detect import get_detection_parser, initialize_detector
-from recognition import arcface, real_time, vgg, mean_shift
+from recognition import arcface, real_time, vgg, clustering
 
 
 def get_classification_parser(online):
     parser = get_detection_parser()
-    classifiers = ['real-time', 'vgg'] if online else ['mean-shift', 'vgg']
+    classifiers = ['real-time', 'vgg'] if online else ['agglomerative', 'dbscan', 'mean-shift', 'vgg']
     parser.add_argument('-c', '--classifier', type=str, choices=classifiers, default=classifiers[0],
                         help=f'Classification model to use, default is {classifiers[0]}.')
     if not online:
@@ -20,14 +20,19 @@ def parse_args(online):
 
 
 def initialize_classifier(model):
-    if model == 'real-time':
-        encoder = arcface.ArcFaceR100(f'{ROOT_DIR}/data/model_files/arcface_r100.pth')
-        return real_time.RealTimeFaceIdentifier(encoder, threshold=0.3)
-    elif model == 'mean-shift':
-        encoder = arcface.ArcFaceR100(f'{ROOT_DIR}/data/model_files/arcface_r100.pth')
-        return mean_shift.MeanShiftFaceIdentifier(encoder)
-    elif model == 'vgg':
+    if model == 'vgg':
         return vgg.VGGFaceClassifier(threshold=0.3)
+
+    encoder = arcface.ArcFaceR100(f'{ROOT_DIR}/data/model_files/arcface_r100.pth')
+
+    if model == 'real-time':
+        return real_time.RealTimeFaceIdentifier(encoder, threshold=0.3)
+    elif model == 'agglomerative':
+        return clustering.AgglomerativeFaceClassifier(encoder, threshold=0.3)
+    elif model == 'dbscan':
+        return clustering.DBSCANFaceClassifier(encoder, threshold=0.5)
+    elif model == 'mean-shift':
+        return clustering.MeanShiftFaceClassifier(encoder)
     else:
         return None
 
