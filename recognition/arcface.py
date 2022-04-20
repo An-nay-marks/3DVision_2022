@@ -22,6 +22,14 @@ class ArcFace:
         img.div_(255).sub_(0.5).div_(0.5)
         return self.model(img).cpu().numpy()[0]
 
+    @staticmethod
+    def similarity(enc1, enc2):
+        return enc1 @ enc2 / (np.norm(enc1) * np.norm(enc2))
+
+    @staticmethod
+    def distance(enc1, enc2):
+        return 1 - ArcFace.similarity(enc1, enc2)
+
 
 class ArcFaceR18(ArcFace):
     def __init__(self, model_file):
