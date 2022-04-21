@@ -27,6 +27,6 @@ class DECAFaceReconstruction(DECA):
         img = torch.from_numpy(img).unsqueeze(0).float().to(self.device)
         img.div_(255)
 
-        code_dict = super().encode(img)
-        op_dict, _ = super().decode(code_dict)
+        code_dict = self.encode(img)
+        op_dict, _ = self.decode(code_dict)
         return op_dict

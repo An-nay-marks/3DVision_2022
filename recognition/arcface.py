@@ -24,7 +24,7 @@ class ArcFace:
 
     @staticmethod
     def similarity(enc1, enc2):
-        return enc1 @ enc2 / (np.norm(enc1) * np.norm(enc2))
+        return enc1 @ enc2 / (np.linalg.norm(enc1) * np.linalg.norm(enc2))
 
     @staticmethod
     def distance(enc1, enc2):
