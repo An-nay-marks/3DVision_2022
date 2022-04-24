@@ -16,6 +16,8 @@ class DECAFaceReconstruction(DECA):
         cfg.model.flame_model_path = flame_file
         cfg.model.tex_path = albedo_file
         cfg.model.use_tex = albedo_file is not None
+        
+        cfg.rasterizer_type = "standard"
 
         super().__init__(cfg, torch.device(device_name))
 
