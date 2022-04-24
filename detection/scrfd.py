@@ -6,7 +6,9 @@ from dependencies.insightface.detection.scrfd.tools.scrfd import SCRFD
 class SCRFaceDetector(SCRFD):
     def __init__(self, model_file):
         providers = (['CUDAExecutionProvider', 'CPUExecutionProvider'])
+        print("here1")
         session = onnxruntime.InferenceSession(model_file, None, providers)
+        print("here2")
         super().__init__(model_file, session)
         self.prepare(0, input_size=(640, 640))
 
