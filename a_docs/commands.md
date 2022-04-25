@@ -8,3 +8,6 @@
         The last part always consists of the usual command line instruction
 - check for job: `bjobs`
 - an output logfile will be created automatically in the project ROOT folder for each run, there you can also check for error messages
+
+# For Code:
+- only do reconstruction with mean optimization: `python reconstruct.py -t "out\test_reconstruction" -lc "out/test_samples" -o mean`

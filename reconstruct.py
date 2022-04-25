@@ -7,6 +7,8 @@ from reconstruction.deca import DECAFaceReconstruction
 def parse_args(online):
     parser = get_classification_parser(online)
     if not online:
+        parser.add_argument('-o', '--optimizer', choices=OPTIMIZERS, default=None,
+                        help=f'Optimizer to improve the reconstruction, default is None. Can only be called for the offline pipeline')
         parser.add_argument('-lc', '--load-classified')
     return parser.parse_known_args()[0]
 
@@ -36,8 +38,14 @@ def run_reconstruction(source, target_dir, online, specific_args):
         classifier = None
 
     deca = initialize_deca()
-    pipeline = online_pipeline if online else offline_pipeline
-    pipeline.run(data_src, target_dir, specific_args.patch_size, detector, classifier, deca)
+    if online:
+        pipeline = online_pipeline
+        pipeline.run(data_src, target_dir, specific_args.patch_size, detector, classifier, deca)
+    else:
+        optimizer = specific_args.optimizer
+        pipeline = offline_pipeline
+        pipeline.run(data_src, target_dir, specific_args.patch_size, detector, classifier, deca, optimizer)
+    
 
 
 def main(default_args):
