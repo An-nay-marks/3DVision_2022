@@ -6,7 +6,7 @@ from recognition import arcface, real_time, vgg, clustering
 
 def get_classification_parser(online):
     parser = get_detection_parser()
-    classifiers = ['real-time', 'vgg'] if online else ['agglomerative', 'dbscan', 'mean-shift', 'vgg']
+    classifiers = ONLINE_CLASSIFIERS if online else OFFLINE_CLASSIFIERS
     parser.add_argument('-c', '--classifier', type=str, choices=classifiers, default=classifiers[0],
                         help=f'Classification model to use, default is {classifiers[0]}.')
     if not online:
