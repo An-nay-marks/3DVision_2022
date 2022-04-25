@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 
 def pad_face(img, left, top, right, bottom):
-    factor = 0.35
+    factor = 0.6
     pad_x = round((right - left) * factor / 2)
     pad_y = round((bottom - top) * factor / 2)
 
@@ -48,12 +48,10 @@ def load_raw_patches(path):
 def load_classified_patches(path):
     patches = []
     identities = []
-
     for identity in tqdm(os.listdir(path)):
         dir_path = os.path.join(path, identity)
         for file in os.listdir(dir_path):
             file_path = os.path.join(dir_path, file)
             patches.append(cv2.imread(file_path))
             identities.append(identity)
-
     return patches, identities
