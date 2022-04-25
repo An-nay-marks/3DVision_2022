@@ -1,7 +1,7 @@
 datasets/
 zzz_tests.py
 data/
-dependencies/
+dependencies/*
 
 #################Other Stuff auto-created by git #####################
 # Byte-compiled / optimized / DLL files

@@ -64,22 +64,48 @@ def run(source, target_dir, export_size, detector, classifier=None, deca=None, o
             sample_dir = create_id_export_dir(target_dir, name)
             patch = resize_face(patch, export_size)
             cv2.imwrite(os.path.join(sample_dir, f'patch_{face_idx + 1}.jpg'), patch)
+        
     else:
         # Reconstruction, optionally with optimizer
         if optimize == "mean":
-            print("Reconstructing faces by averaging face parameters...")
+            print("Reconstructing faces by averaging all face parameters...")
             ids = np.unique(identities)
             for unique_id in tqdm(ids):
                 # filter for unique id, and average all faces from the corresponding id
                 unique_id_broadcasted = np.full(fill_value=unique_id, shape=len(identities))
                 face_mask = np.where(identities == unique_id_broadcasted, True, False)
                 unique_id_faces = np.asarray(faces)[face_mask].tolist()
-                reconstruction, _ = deca.decode_average(deca.encode_average(unique_id_faces))
+                reconstruction, _ = deca.decode(deca.encode_average(unique_id_faces))
                 name = f'{unique_id}_mean'
                 id_dir = create_id_export_dir(target_dir, name)
                 os.makedirs(id_dir, exist_ok=True)
                 path = os.path.join(id_dir, f'{name}.obj')
                 deca.save_obj(path, reconstruction)
+        
+        elif optimize == "mean_shape":
+            print("Averaging shape parameters for reconstruction...")
+            unique_ids = np.unique(identities)
+            average_shape_parameters = []
+            for unique_id in tqdm(unique_ids):
+                # filter for unique id, and average all faces from the corresponding id
+                unique_id_broadcasted = np.full(fill_value=unique_id, shape=len(identities))
+                face_mask = np.where(identities == unique_id_broadcasted, True, False)
+                unique_id_faces = np.asarray(faces)[face_mask].tolist()
+                average_shape = deca.get_average_shape_param(unique_id_faces)
+                average_shape_parameters.append(average_shape)
+            print("Reconstructing with average shape parameters...")
+            for face_idx, (identity, patch) in enumerate(tqdm(zip(identities, faces), total=len(faces))):
+                name = identity if classifier is None else classifier.get_name(identity)
+                sample_dir = create_id_export_dir(target_dir, name)
+                average_shape_parameter_index = np.where(unique_ids==identity)
+                average_shape = average_shape_parameters[average_shape_parameter_index[0].item()]
+                reconstruction, _ = deca.decode(deca.encode(patch, average_shape))
+                sample_name = f'patch_{face_idx + 1}'
+                sample_dir = os.path.join(sample_dir, sample_name)
+                os.makedirs(sample_dir, exist_ok=True)
+                path = os.path.join(sample_dir, f'{sample_name}.obj')
+                deca.save_obj(path, reconstruction)
+        
         else:
             print("Reconstructing faces...")
             for face_idx, (identity, patch) in enumerate(tqdm(zip(identities, faces), total=len(faces))):

@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
+from sklearn.metrics import pairwise_distances_argmin_min
 
 from dependencies.DECA.decalib.deca import DECA
 from dependencies.DECA.decalib.utils.rotation_converter import batch_euler2axis
@@ -23,10 +24,43 @@ class DECAFaceReconstruction(DECA):
         super().__init__(cfg, torch.device(device_name))
 
     @torch.no_grad()
-    def encode(self, img):
+    def encode(self, img, average_shape=None):
+        '''usual deca encoding, but can also use average shape parameters if given for more robust reconstruction'''
         img = self.transform_image_for_deca(img)
-        code_dict = super().encode(img)
-        return code_dict
+        if average_shape is None:
+            codedict = super().encode(img)
+        else:
+            with torch.no_grad():
+                flame_parameters = self.E_flame(img)
+            detailcode = self.E_detail(img)
+            codedict = self.decompose_code(flame_parameters, self.param_dict)
+            codedict['images'] = img
+            codedict['detail'] = detailcode
+            codedict['shape'] = average_shape
+            if self.cfg.model.jaw_type == 'euler':
+                posecode = codedict['pose']
+                euler_jaw_pose = posecode[:,3:].clone() # x for yaw (open mouth), y for pitch (left ang right), z for roll
+                posecode[:,3:] = batch_euler2axis(euler_jaw_pose)
+                codedict['pose'] = posecode
+                codedict['euler_jaw_pose'] = euler_jaw_pose
+        return codedict
+    
+    @torch.no_grad()
+    def get_average_shape_param(self, imgs):
+        '''returns the average shape parameter for all images'''
+        flame_parameters = []
+        for img in imgs:
+            img = self.transform_image_for_deca(img)
+            with torch.no_grad():
+                parameters = self.E_flame(img)
+            flame_parameters.append(parameters)
+        
+        # average flame and detail codes
+        flame_parameters = torch.cat(flame_parameters, dim=0)
+        mean_flame_parameters = torch.mean(flame_parameters, dim=0)
+        mean_flame_parameters = mean_flame_parameters[None, :] # required dim = torch.Size([1, 236])
+        codedict = self.decompose_code(mean_flame_parameters, self.param_dict)
+        return codedict['shape']
     
     @torch.no_grad()
     def encode_average(self, imgs):
@@ -44,7 +78,6 @@ class DECAFaceReconstruction(DECA):
             flame_parameters.append(parameters)
             detailcode = self.E_detail(img)
             detail_parameters.append(detailcode)
-        imgs = torch.cat(transformed_images)
         
         # average flame and detail codes
         flame_parameters = torch.cat(flame_parameters, dim=0)
@@ -54,9 +87,14 @@ class DECAFaceReconstruction(DECA):
         mean_detail_parameters = torch.mean(detail_parameters, dim=0)
         mean_detail_parameters = mean_detail_parameters[None, :] # required dim = torch.Size([1, 128])
         
+        # get image closest to the average flame parameters for the decoder
+        mean_flame_params_numpy = mean_flame_parameters.numpy()
+        closest_idx, _ = pairwise_distances_argmin_min(mean_flame_params_numpy, flame_parameters.numpy())
+        average_img = transformed_images[closest_idx[0]]
+        
         # transform parameters into correct dictionary shape for decoder
         codedict = self.decompose_code(mean_flame_parameters, self.param_dict)
-        codedict['images'] = imgs
+        codedict['images'] = average_img # image closest to cluster center for the decoder (albedo, texture, ...)
         codedict['detail'] = mean_detail_parameters
         if self.cfg.model.jaw_type == 'euler':
                 posecode = codedict['pose']
@@ -67,8 +105,7 @@ class DECAFaceReconstruction(DECA):
         return codedict
     
     @torch.no_grad()
-    def decode_average(self, codedict, rendering=True, iddict=None, vis_lmk=True, return_vis=True, use_detail=True,
-                render_orig=False, original_image=None, tform=None):
+    def decode_average(self, codedict, rendering=True, iddict=None, vis_lmk=True, return_vis=True, use_detail=True,):
         '''adapted from original DECA, can now handle multiple images and averages their albedo shape'''
         images = codedict['images']
         batch_size = images[0].shape[0]

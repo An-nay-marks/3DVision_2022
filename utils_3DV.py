@@ -12,7 +12,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DETECTORS = ['scrfd', 'yolo5']
 ONLINE_CLASSIFIERS = ['real-time', 'vgg']
 OFFLINE_CLASSIFIERS = ['agglomerative', 'dbscan', 'mean-shift', 'vgg']
-OPTIMIZERS = ['mean']
+OPTIMIZERS = ['mean', 'mean_shape']
 
 
 def get_default_parser():

@@ -10,4 +10,5 @@
 - an output logfile will be created automatically in the project ROOT folder for each run, there you can also check for error messages
 
 # For Code:
-- only do reconstruction with mean optimization: `python reconstruct.py -t "out\test_reconstruction" -lc "out/test_samples" -o mean`
+- only do reconstruction with mean optimization: `python reconstruct.py -t "out\test_reconstruction_mean" -lc "out/test_samples" -op "mean"`
+- only do reconstruction with mean shape optimization: `python reconstruct.py -t "out\test_reconstruction_mean_shape" -lc "out/test_samples" -op "mean_shape"`
