@@ -6,7 +6,7 @@ from pipeline.pipeline_utils import *
 from utils_3DV import *
 import warnings
 
-def run(source, target_dir, export_size, detector, classifier=None, deca=None, optimize=None):
+def run(source, target_dir, export_size, detector=None, classifier=None, deca=None, optimize=None):
     warnings.filterwarnings("ignore", category=UserWarning) 
     if not init_dir(target_dir):
         return
@@ -25,8 +25,8 @@ def run(source, target_dir, export_size, detector, classifier=None, deca=None, o
             faces = []
             num_frames = int(source.get(cv2.CAP_PROP_FRAME_COUNT))
             for frame_idx in tqdm(range(num_frames)):
-                if frame_idx > 1000:
-                    break
+                #if frame_idx > 1000:
+                #    break
                 valid, frame = source.read()
                 bboxes = detector.detect(frame)
 
