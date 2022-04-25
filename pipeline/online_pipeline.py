@@ -2,9 +2,11 @@ import time
 
 from pipeline.pipeline_utils import *
 from utils_3DV import init_dir
+import warnings
 
 
 def run(provider, target_dir, export_size, detector, classifier=None, deca=None):
+    warnings.filterwarnings("ignore", category=UserWarning) 
     if not init_dir(target_dir):
         return
 
@@ -49,7 +51,7 @@ def run(provider, target_dir, export_size, detector, classifier=None, deca=None)
                     face_patch = resize_face(face_patch, export_size)
                     cv2.imwrite(os.path.join(sample_dir, f'patch_{face_idx + 1}.jpg'), face_patch)
                 else:
-                    reconstruction = deca.reconstruct(face_patch)
+                    reconstruction, _ = deca.decode(deca.encode(face_patch))
                     sample_dir = os.path.join(sample_dir, sample_name)
                     os.makedirs(sample_dir, exist_ok=True)
                     deca.save_obj(os.path.join(sample_dir, f'{sample_name}.obj'), reconstruction)

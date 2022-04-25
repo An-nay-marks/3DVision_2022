@@ -1,13 +1,18 @@
+from enum import unique
+from turtle import shape
 import numpy as np
 
 from pipeline.pipeline_utils import *
 from utils_3DV import *
+import warnings
 
-
-def run(source, target_dir, export_size, detector, classifier=None, deca=None):
+def run(source, target_dir, export_size, detector, classifier=None, deca=None, optimize=None):
+    warnings.filterwarnings("ignore", category=UserWarning) 
     if not init_dir(target_dir):
         return
-
+    if optimize is not None and deca is None:
+        print("Error: Optimizer can only be called if DECA is selected!")
+        return
     if detector is None and classifier is None:
         print("Loading classified patches...")
         faces, identities = load_classified_patches(source)
@@ -20,6 +25,8 @@ def run(source, target_dir, export_size, detector, classifier=None, deca=None):
             faces = []
             num_frames = int(source.get(cv2.CAP_PROP_FRAME_COUNT))
             for frame_idx in tqdm(range(num_frames)):
+                if frame_idx > 1000:
+                    break
                 valid, frame = source.read()
                 bboxes = detector.detect(frame)
 
@@ -49,18 +56,38 @@ def run(source, target_dir, export_size, detector, classifier=None, deca=None):
 
         faces = faces[best_idx]
         identities = identities[best_idx]
-
-    print("Exporting patches..." if deca is None else "Reconstructing faces...")
-    for face_idx, (identity, patch) in enumerate(tqdm(zip(identities, faces), total=len(faces))):
-        name = identity if classifier is None else classifier.get_name(identity)
-        sample_dir = create_id_export_dir(target_dir, name)
-
-        if deca is None:
+    
+    if deca is None:
+        print("Exporting patches...")
+        for face_idx, (identity, patch) in enumerate(tqdm(zip(identities, faces), total=len(faces))):
+            name = identity if classifier is None else classifier.get_name(identity)
+            sample_dir = create_id_export_dir(target_dir, name)
             patch = resize_face(patch, export_size)
             cv2.imwrite(os.path.join(sample_dir, f'patch_{face_idx + 1}.jpg'), patch)
+    else:
+        # Reconstruction, optionally with optimizer
+        if optimize == "mean":
+            print("Reconstructing faces by averaging face parameters...")
+            ids = np.unique(identities)
+            for unique_id in tqdm(ids):
+                # filter for unique id, and average all faces from the corresponding id
+                unique_id_broadcasted = np.full(fill_value=unique_id, shape=len(identities))
+                face_mask = np.where(identities == unique_id_broadcasted, True, False)
+                unique_id_faces = np.asarray(faces)[face_mask].tolist()
+                reconstruction, _ = deca.decode_average(deca.encode_average(unique_id_faces))
+                name = f'{unique_id}_mean'
+                id_dir = create_id_export_dir(target_dir, name)
+                os.makedirs(id_dir, exist_ok=True)
+                path = os.path.join(id_dir, f'{name}.obj')
+                deca.save_obj(path, reconstruction)
         else:
-            reconstruction = deca.reconstruct(patch)
-            sample_name = f'patch_{face_idx + 1}'
-            sample_dir = os.path.join(sample_dir, sample_name)
-            os.makedirs(sample_dir, exist_ok=True)
-            deca.save_obj(os.path.join(sample_dir, f'{sample_name}.obj'), reconstruction)
+            print("Reconstructing faces...")
+            for face_idx, (identity, patch) in enumerate(tqdm(zip(identities, faces), total=len(faces))):
+                name = identity if classifier is None else classifier.get_name(identity)
+                sample_dir = create_id_export_dir(target_dir, name)        
+                reconstruction, _ = deca.decode(deca.encode(patch))
+                sample_name = f'patch_{face_idx + 1}'
+                sample_dir = os.path.join(sample_dir, sample_name)
+                os.makedirs(sample_dir, exist_ok=True)
+                path = os.path.join(sample_dir, f'{sample_name}.obj')
+                deca.save_obj(path, reconstruction)
