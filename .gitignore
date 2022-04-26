@@ -1,7 +1,9 @@
 datasets/
 zzz_tests.py
+# so that the folders are still there:
 data/
 dependencies/*
+out/*
 
 #################Other Stuff auto-created by git #####################
 # Byte-compiled / optimized / DLL files
@@ -134,4 +136,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .idea
-out/
+
