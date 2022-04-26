@@ -7,11 +7,20 @@ from sklearn import base, cluster, neighbors
 class _ClusterFaceClassifier(base.ClusterMixin):
     def __init__(self, encoder):
         self.encoder = encoder
-
-    def classify_all(self, faces):
+        self.encodings = None
+    
+    def encode_all(self, faces):
         encodings = []
         for patch in tqdm(faces):
             encodings.append(self.encoder.encode(patch))
+        self.encodings = encodings
+        return encodings
+            
+    def classify_all(self, faces):
+        if self.encodings is None:
+            self.encode_all(faces)
+        encodings = self.encodings
+        self.encodings = None # in case the same classifier object is being used for classification of different patches
         return encodings, self.fit_predict(encodings)
 
     @staticmethod
