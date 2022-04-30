@@ -55,3 +55,37 @@ def load_classified_patches(path):
             patches.append(cv2.imread(file_path))
             identities.append(identity)
     return patches, identities
+
+
+def find_matches(bboxes, bboxes_flipped, matches):
+    total_flipped = 0
+
+    #loop over all faces detected in the current frame
+    for i in range(0,bboxes.shape[0]):
+            #keep track of the minimum difference seen so far between the 'left' 
+            #and 'right' values of the bounding box in the original vs. flipped version
+            min_left_dif = 10000.0
+            min_right_dif = 10000.0
+
+            #for each face detected in the current frame go through all faces detected in the flipped version
+            for j in range(0, bboxes_flipped.shape[0]):
+                
+                #we go through all faces in the flipped version here.
+                if i == 0:
+                    total_flipped += 1
+
+                left_dif =  abs(bboxes[i][1] - bboxes_flipped[j][1])
+                right_dif = abs(bboxes[i][3] - bboxes_flipped[j][3])
+
+                #most likely the same face if the difference is lower than a small threshold
+                #also make sure it's the smallest difference seen so far
+
+                if left_dif < min(10.0, min_left_dif) and right_dif < min(20.0, min_right_dif):
+                    matches[i] = j
+                    min_left_dif = left_dif
+                    min_right_dif = right_dif
+            
+            #print('face ', i, ' in the original frame matched with face ', matches[i], ' in the flipped frame')
+    
+    #print(matches)
+    return matches, total_flipped
