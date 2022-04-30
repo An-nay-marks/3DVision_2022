@@ -4,10 +4,11 @@ import cv2
 import numpy as np
 
 from tqdm import tqdm
-from keras_vggface.vggface import VGGFace
-from keras_vggface.utils import preprocess_input
-from keras_vggface.utils import decode_predictions
+#from keras_vggface.vggface import VGGFace
+#from keras_vggface.utils import preprocess_input
+#from keras_vggface.utils import decode_predictions
 from numpy import expand_dims
+import tensorflow.python.keras.layers
 
 
 class VGGFaceClassifier:
