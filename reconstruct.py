@@ -20,7 +20,7 @@ def initialize_deca():
     return DECAFaceReconstruction(deca_file, flame_file, albedo_file)
 
 
-def run_reconstruction(source, target_dir, online, specific_args):
+def run_reconstruction(source, run_name, online, specific_args):
     online_status = 'online' if online else 'offline'
     print(f'Running {online_status} reconstruction pipeline')
 
@@ -40,11 +40,11 @@ def run_reconstruction(source, target_dir, online, specific_args):
     deca = initialize_deca()
     if online:
         pipeline = online_pipeline
-        pipeline.run(data_src, target_dir, specific_args.patch_size, detector, classifier, deca)
+        pipeline.run(data_src, run_name, specific_args.patch_size, detector, classifier, deca)
     else:
         optimize = specific_args.optimizer
         pipeline = offline_pipeline
-        pipeline.run(data_src, target_dir, specific_args.patch_size, detector, classifier, deca, optimize)
+        pipeline.run(data_src, run_name, specific_args.patch_size, detector, classifier, deca, optimize)
     
 
 

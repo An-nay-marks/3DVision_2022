@@ -11,7 +11,7 @@ from classify import initialize_classifier
 import random
 
 
-def classify_and_visualize_for_offline_classifiers(target_folder, classifier = None, path_to_raw_patches=None, use_pca=False):
+def classify_and_visualize_for_offline_classifiers(run_name, classifier = None, path_to_raw_patches=None, use_pca=False):
     """Classifies the patches and Visualizes the patches according to their identity. It saves the visualization in the target folder.
     Args:
         classifier (Classifier): classifier name
@@ -24,6 +24,7 @@ def classify_and_visualize_for_offline_classifiers(target_folder, classifier = N
     #   patches, identities = load_classified_patches(data_src)
     #   patches, identities = load_classified_patches(path_to_classified_patches) # delete after testing
     #else:
+    target_folder = f"{OUT_DIR}/{run_name}"
     print("Loading Raw Patches ...")
     patches = load_raw_patches(path_to_raw_patches)
     if use_pca:
@@ -131,6 +132,6 @@ def __get_plt_for_grid_vis(patches, identities):
 
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
-    # classify_and_visualize_for_offline_classifiers(classifier = "agglomerative", target_folder=f"{ROOT_DIR}\\out\\test_samples_visualization", path_to_classified_patches=f"{ROOT_DIR}\\out\\test_samples", use_pca=True)
-    # classify_and_visualize_for_offline_classifiers(classifier = "agglomerative", target_folder=f"{ROOT_DIR}\\out\\test_samples_visualization_grid", path_to_classified_patches=f"{ROOT_DIR}\\out\\test_samples", use_pca=False)
-    # visualize_classified_patches_in_grid(target_folder=f"{ROOT_DIR}\\out\\test_samples_visualization_grid", path_to_classified_patches=f"{ROOT_DIR}\\out\\test_samples")
+    # classify_and_visualize_for_offline_classifiers(classifier = "agglomerative", run_name="test_samples_visualization", path_to_classified_patches=f"{ROOT_DIR}\\out\\test_samples", use_pca=True)
+    # classify_and_visualize_for_offline_classifiers(classifier = "agglomerative", run_name="test_samples_visualization_grid", path_to_classified_patches=f"{ROOT_DIR}\\out\\test_samples", use_pca=False)
+    # visualize_classified_patches_in_grid(run_name="test_samples_visualization_grid", path_to_classified_patches=f"{ROOT_DIR}\\out\\test_samples")

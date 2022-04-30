@@ -26,14 +26,14 @@ def initialize_detector(model):
         return None
 
 
-def run_detection(source, target_dir, online, specific_args):
+def run_detection(source, run_name, online, specific_args):
     online_status = 'online' if online else 'offline'
     print(f'Running {online_status} detection pipeline')
 
     provider = initialize_video_provider(source)
     detector = initialize_detector(specific_args.detector)
     pipeline = online_pipeline if online else offline_pipeline
-    pipeline.run(provider, target_dir, specific_args.patch_size, detector)
+    pipeline.run(provider, run_name, specific_args.patch_size, detector)
 
 
 def main(default_args):

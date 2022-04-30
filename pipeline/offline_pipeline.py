@@ -6,10 +6,12 @@ from pipeline.pipeline_utils import *
 from utils_3DV import *
 import warnings
 
-def run(source, target_dir, export_size, detector=None, classifier=None, deca=None, optimize=None):
+def run(source, run_name, export_size, detector=None, classifier=None, deca=None, optimize=None):
     warnings.filterwarnings("ignore", category=UserWarning) 
-    if not init_dir(target_dir):
+    if not init_dir(run_name):
         return
+    target_dir = f"{OUT_DIR}/{run_name}"
+    logs_dir = f"{LOGS_DIR}/{run_name}"
     if optimize is not None and deca is None:
         print("Error: Optimizer can only be called if DECA is selected!")
         return
