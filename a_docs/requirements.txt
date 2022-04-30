@@ -8,8 +8,10 @@ cmake==3.22.3
 colorama==0.4.4
 importlib-metadata==4.11.3
 numpy
+pathlib
+ruamel-yaml
 opencv-python==4.5.5.64
-Pillow==6.0.1
+Pillow==8.0.0
 typing_extensions==4.1.1
 wincertstore==0.2
 zipp==3.7.0
@@ -22,7 +24,7 @@ seaborn
 sklearn
 requests==2.27.1
 tqdm==4.64.0
-matplotlob==3.5.1
+matplotlib==3.5.1
 pandas==1.3.5
 seaborn==0.11.2
 scikit-learn==1.0.2
