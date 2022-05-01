@@ -7,3 +7,6 @@
 [submodule "dependencies/DECA"]
 	path = dependencies/DECA
 	url = https://github.com/YadiraF/DECA.git
+[submodule "dependencies/NOW_EVAL"]
+	path = dependencies/NOW_EVAL
+	url = https://github.com/soubhiksanyal/now_evaluation.git
