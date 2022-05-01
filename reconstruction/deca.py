@@ -1,28 +1,74 @@
 import cv2
 import numpy as np
 import torch
-import torch.nn.functional as F
 from sklearn.metrics import pairwise_distances_argmin_min
 
+from tqdm import tqdm
+from utils_3DV import DEVICE
 from dependencies.DECA.decalib.deca import DECA
 from dependencies.DECA.decalib.utils.rotation_converter import batch_euler2axis
-from dependencies.DECA.decalib.utils import config, util, tensor_cropper
+from dependencies.DECA.decalib.utils import config, util
 
 
 class DECAFaceReconstruction(DECA):
-    def __init__(self, deca_file, flame_file, albedo_file=None):
-        device_name = "cuda" if torch.cuda.is_available() else "cpu"
-
+    def __init__(self, deca_file, flame_file, albedo_file=None, optimize=None):
         cfg = config.get_cfg_defaults()
-        cfg.device = device_name
+        cfg.device = DEVICE
         cfg.pretrained_modelpath = deca_file
         cfg.model.flame_model_path = flame_file
         cfg.model.tex_path = albedo_file
         cfg.model.use_tex = albedo_file is not None
         # cfg.rasterizer_type = "standard"
+        self.optimize = optimize
+        super().__init__(cfg, DEVICE)
+        
+    @torch.no_grad()
+    def reconstruct(self, identities, faces, classifier = None):
+        reconstructions = []
+        identity_names = []
+        sample_names = []
+        
+        if self.optimize is None:
+            # regular reconstruction
+            print("Reconstructing faces...")
+            for face_idx, (identity, patch) in enumerate(tqdm(zip(identities, faces), total=len(faces))):
+                reconstruction, _ = self.decode(self.encode(patch))
+                reconstructions.append(reconstruction)
+                identity_names.append(identity if classifier is None else classifier.get_name(identity))
+                sample_names.append(f'patch_{face_idx + 1}')
+        
+        elif self.optimize == "mean":
+            print("Reconstructing faces by averaging all face parameters...")
+            unique_ids = np.unique(identities)
+            for unique_id in tqdm(unique_ids):
+                # filter for unique id, and average all faces from the corresponding id
+                unique_id_broadcasted = np.full(fill_value=unique_id, shape=len(identities))
+                face_mask = np.where(identities == unique_id_broadcasted, True, False)
+                unique_id_faces = np.asarray(faces)[face_mask].tolist()
+                reconstruction, _ = self.decode(self.encode_average(unique_id_faces))
+                
+                reconstructions.append(reconstruction)
+                identity_names.append(f'{unique_id}_mean')
+        
+        elif self.optimize == "mean_shape":
+            print("Averaging shape parameters for reconstruction...")
+            unique_ids, average_shape_parameters_per_id = self.average_shape_by_id(identities, faces)
+            print("Reconstructing with average shape parameters...")
+            for face_idx, (identity, patch) in enumerate(tqdm(zip(identities, faces), total=len(faces))):
+                average_shape_parameter_index = np.where(unique_ids==identity)
+                average_shape = average_shape_parameters_per_id[average_shape_parameter_index[0].item()]
+                reconstruction, _ = self.decode(self.encode(patch, average_shape))
+                
+                reconstructions.append(reconstruction)
+                identity_names.append(identity if classifier is None else classifier.get_name(identity))
+                sample_names.append(f'patch_{face_idx + 1}')
+        
+        else:
+            print(f"Reconstruction with this optimization type not found: {self.optimize}")
+        
+        return reconstructions, identity_names, sample_names
 
-        super().__init__(cfg, torch.device(device_name))
-
+    
     @torch.no_grad()
     def encode(self, img, average_shape=None):
         '''usual deca encoding, but can also use average shape parameters if given for more robust reconstruction'''
@@ -44,23 +90,6 @@ class DECAFaceReconstruction(DECA):
                 codedict['pose'] = posecode
                 codedict['euler_jaw_pose'] = euler_jaw_pose
         return codedict
-    
-    @torch.no_grad()
-    def get_average_shape_param(self, imgs):
-        '''returns the average shape parameter for all images'''
-        flame_parameters = []
-        for img in imgs:
-            img = self.transform_image_for_deca(img)
-            with torch.no_grad():
-                parameters = self.E_flame(img)
-            flame_parameters.append(parameters)
-        
-        # average flame and detail codes
-        flame_parameters = torch.cat(flame_parameters, dim=0)
-        mean_flame_parameters = torch.mean(flame_parameters, dim=0)
-        mean_flame_parameters = mean_flame_parameters[None, :] # required dim = torch.Size([1, 236])
-        codedict = self.decompose_code(mean_flame_parameters, self.param_dict)
-        return codedict['shape']
     
     @torch.no_grad()
     def encode_average(self, imgs):
@@ -103,6 +132,37 @@ class DECAFaceReconstruction(DECA):
                 codedict['pose'] = posecode
                 codedict['euler_jaw_pose'] = euler_jaw_pose
         return codedict
+    
+    @torch.no_grad()
+    def average_shape_by_id(self, identities, faces):
+        '''returns unique ids and list of average shape parameters for each id'''
+        unique_ids = np.unique(identities)
+        average_shape_parameters = []
+        for unique_id in tqdm(unique_ids):
+            # filter for unique id, and average all faces from the corresponding id
+            unique_id_broadcasted = np.full(fill_value=unique_id, shape=len(identities))
+            face_mask = np.where(identities == unique_id_broadcasted, True, False)
+            unique_id_faces = np.asarray(faces)[face_mask].tolist()
+            average_shape = self._get_average_shape_param(unique_id_faces)
+            average_shape_parameters.append(average_shape)
+        return unique_ids, average_shape_parameters
+    
+    @torch.no_grad()
+    def _get_average_shape_param(self, imgs):
+        '''returns the average shape parameter for all images'''
+        flame_parameters = []
+        for img in imgs:
+            img = self.transform_image_for_deca(img)
+            with torch.no_grad():
+                parameters = self.E_flame(img)
+            flame_parameters.append(parameters)
+        
+        # average flame and detail codes
+        flame_parameters = torch.cat(flame_parameters, dim=0)
+        mean_flame_parameters = torch.mean(flame_parameters, dim=0)
+        mean_flame_parameters = mean_flame_parameters[None, :] # required dim = torch.Size([1, 236])
+        codedict = self.decompose_code(mean_flame_parameters, self.param_dict)
+        return codedict['shape']
     
     @torch.no_grad()
     def transform_image_for_deca(self, img):

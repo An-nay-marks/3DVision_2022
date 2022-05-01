@@ -13,11 +13,14 @@ def parse_args(online):
     return parser.parse_known_args()[0]
 
 
-def initialize_deca():
+def initialize_deca(optimize = None):
     deca_file = f'{ROOT_DIR}/data/model_files/deca_model.tar'
     flame_file = f'{ROOT_DIR}/data/model_files/generic_model.pkl'
     albedo_file = f'{ROOT_DIR}/data/model_files/FLAME_albedo_from_BFM.npz'
-    return DECAFaceReconstruction(deca_file, flame_file, albedo_file)
+    if not os.path.exists(albedo_file):
+        print("WARNING: Albedo File not found. Reconstruction will be performed without albedo.")
+        albedo_file = None
+    return DECAFaceReconstruction(deca_file, flame_file, albedo_file, optimize)
 
 
 def run_reconstruction(source, run_name, online, specific_args):
@@ -36,15 +39,12 @@ def run_reconstruction(source, run_name, online, specific_args):
         data_src = specific_args.load_classified
         detector = None
         classifier = None
-
-    deca = initialize_deca()
-    if online:
-        pipeline = online_pipeline
-        pipeline.run(data_src, run_name, specific_args.patch_size, detector, classifier, deca)
-    else:
-        optimize = specific_args.optimizer
-        pipeline = offline_pipeline
-        pipeline.run(data_src, run_name, specific_args.patch_size, detector, classifier, deca, optimize)
+    
+    if online and specific_args.optimizer is not None:
+        print("WARNING: Optimizers can only be run for the offline pipeline. Optimizer will be ignored...")
+    deca = initialize_deca(specific_args.optimizer)
+    pipeline = online_pipeline if online else offline_pipeline
+    pipeline.run(data_src, run_name, specific_args.patch_size, detector, classifier, deca)
     
 
 
