@@ -137,3 +137,4 @@ dmypy.json
 .pyre/
 .idea
 
+dependencies/yolo5_face
