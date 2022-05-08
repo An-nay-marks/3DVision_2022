@@ -5,7 +5,7 @@ class OptimizerNN(nn.Module):
     def __init__(self, num_conv_layers):
         super().__init__()
         # dynamically increase output size
-        self.canny = ... # TODO
+        # self.canny = ... # TODO
         
         layers = []
         curr_channel_size = 4 # 3 for image +1 for Canny
@@ -13,12 +13,13 @@ class OptimizerNN(nn.Module):
             layers.append(ConvolutionBatchNormRELU(curr_channel_size, curr_channel_size+3))
             curr_channel_size += 3
         layers.append(BinaryLinearOutput())
-        self.model = nn.Sequential(layers)
+        self.model = nn.Sequential(*layers)
     
     def forward(self, x):
-        canny = self.canny(x)
-        merged = cat((canny, x), 1) # append detected edges with input image
-        return self.model(merged)
+        #canny = self.canny(x)
+        #merged = cat((canny, x), 1) # append detected edges with input image
+        #return self.model(merged)
+        return self.model(x)
 
 class ConvolutionBatchNormRELU(nn.Module):
     '''block consisting of conv2d, batch normalization and relu
@@ -60,4 +61,5 @@ class SobelLayer(nn.Module):
         # vertical = F.conv3d(x, self.kernel_vertical, stride = 1, padding=1) # keep dimensionality
         # horizontal = 
         ... # TODO
-        
+
+# TODO: maybe include blob detector, facial landmark detector

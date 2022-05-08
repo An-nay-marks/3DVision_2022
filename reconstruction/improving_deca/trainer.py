@@ -2,15 +2,15 @@ import os
 import random
 import torch
 from torch.utils.data import DataLoader, Subset
-from dataloader import DataLoader
+from .dataloader import OptDataLoader
 from utils_3DV import *
-from deca import DECA
+from ..deca import DECA
 import numpy as np
-from dependencies.NOW_EVAL import check_predictions, compute_error
+
 
 
 class Trainer():
-    def __init__(self, dataloader, attention_model, optimizer, experiment_name, num_epochs, load_checkpoint_path = None, run_name=None, split=0.8,
+    def __init__(self, model, optimizer, experiment_name, num_epochs, load_checkpoint_path = None, run_name=None, split=0.8,
                  batch_size=1, loss_function=None, scheduler=None, evaluation_interval=10, num_samples_to_visualize=6, checkpoint_interval=50):
         """
         class for model trainers.
@@ -29,12 +29,15 @@ class Trainer():
             num_samples_to_visualize: number of samples to visualize predictions for during evaluation (default is 6)
             checkpoint_interval: interval, in iterations, in which to create model checkpoints (WARNING: None or 0 to discard model)
         """
-        self.dataloader = dataloader
-        self.attention_model = attention_model
+        self.attention_model = model
         self.optimizer = optimizer
         self.experiment_name = experiment_name
         self.num_epochs = num_epochs
         self.DECA_model = DECA(device = DEVICE)
+        
+        self.dataloader = OptDataLoader(self.DECA_model)
+        self.training_dataloader, self.test_dataloader = self.dataloader.getDataLoaders()
+        
         self.run_name = run_name if run_name is not None else get_current_datetime_as_str()
         self.split = split
         self.batch_size = batch_size
@@ -71,7 +74,7 @@ class Trainer():
             if self.load_checkpoint_path is not None:
                 self._load_checkpoint(self.load_checkpoint_path)
 
-            callback_handler = AttentionTrainer.Callback(self, self.attention_model)
+            callback_handler = Trainer.Callback(self, self.attention_model)
             
             for epoch in range(self.num_epochs):
                 train_loss = self._train_step(callback_handler=callback_handler)
@@ -163,15 +166,6 @@ class Trainer():
             'optimizer': self.optimizer_or_lr,
             'loss function': self.loss_function,
         }
-    
-    def get_reconstruction_score(weighted_reconstructions, y):
-        raise NotImplementedError()
-        for weighted_reconstruction, groundtruth in weighted_reconstructions, y:
-            ... # check whether prediction can be loaded
-            # check_predictions.py <predicted_mesh_path> <predicted_mesh_landmark_path> <gt_scan_path> <gt_lmk_path> 
-            ... # than compute the error
-            # python compute_error.py <dataset_folder> <predicted_mesh_folder> <validatton_or_test_set>
-        #TODO: get evaluation reconstruction score in comparison to "groundtruth"
     
     # Visualizations are created using the "create_visualizations" functions of the Trainer
     def create_visualizations(self, file_path):

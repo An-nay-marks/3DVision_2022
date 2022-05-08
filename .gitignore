@@ -3,6 +3,7 @@ zzz_tests.py
 # so that the folders are still there:
 data/
 dependencies/*
+dependencies
 out/*
 
 #################Other Stuff auto-created by git #####################

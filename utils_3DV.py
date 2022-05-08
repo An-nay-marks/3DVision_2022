@@ -87,3 +87,9 @@ def init_dir(run_name):
         shutil.rmtree(target_logs_path)
     os.makedirs(target_logs_path)
     return True
+
+def read_lines_as_list(textfile):
+    with open(textfile) as lines:
+            lines = lines.readlines()
+            lines = [line.rstrip() for line in lines]
+    return lines
