@@ -1,17 +1,16 @@
-import os
 import random
-import torch
-from torch.utils.data import DataLoader, Subset
-from .dataloader import OptDataLoader
-from utils_3DV import *
-from ..deca import DECA
 import numpy as np
 
+from torch.utils.data import DataLoader, Subset
+from dataloader import OptDataLoader
+from utils_3DV import *
+from reconstruction.deca import DECA
 
 
-class Trainer():
-    def __init__(self, model, optimizer, experiment_name, num_epochs, load_checkpoint_path = None, run_name=None, split=0.8,
-                 batch_size=1, loss_function=None, scheduler=None, evaluation_interval=10, num_samples_to_visualize=6, checkpoint_interval=50):
+class Trainer:
+    def __init__(self, model, optimizer, experiment_name, num_epochs, load_checkpoint_path = None, run_name=None,
+                 split=0.8, batch_size=1, loss_function=None, scheduler=None, evaluation_interval=10,
+                 num_samples_to_visualize=6, checkpoint_interval=50):
         """
         class for model trainers.
         Args:
@@ -83,7 +82,7 @@ class Trainer():
 
                 print('\nEpoch %i finished at {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()) % epoch)
                 print('Metrics: %s\n' % str(metrics))
-                #TODO: log metrics, iteration number, logfiles
+                # TODO: log metrics, iteration number, logfiles
                 
             if self.do_checkpoint:
                 # save final checkpoint
@@ -104,7 +103,7 @@ class Trainer():
             weighted_reconstructions = []
             for idx, patch in enumerate(x):
                 encoding_dic = self.DECA_model.encode(patch)
-                encoding_dic['shape'] *= weights[idx] #TODO: test if this syntax even works with dictionaries
+                encoding_dic['shape'] *= weights[idx]  # TODO: test if this syntax even works with dictionaries
                 reconstruction = self.DECA_model.decode(encoding_dic)
                 dictionaries.append(encoding_dic.detach().cpu())
                 weighted_reconstructions.append(reconstruction.detach().cpu())
@@ -228,8 +227,7 @@ class Trainer():
         self.optimizer_or_lr.load_state_dict(checkpoint['optimizer'])
         print('Checkpoint loaded\n')
         os.remove(final_checkpoint_path)
-    
-    
+
     class Callback:
         """Callback as Helper class of Trainer
         gets initialized once every train() call

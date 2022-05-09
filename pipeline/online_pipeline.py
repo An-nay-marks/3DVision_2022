@@ -1,5 +1,3 @@
-import time
-
 from pipeline.pipeline_utils import *
 from utils_3DV import *
 import warnings
@@ -10,7 +8,7 @@ def run(provider, run_name, export_size, detector, classifier=None, deca=None):
     if not init_dir(run_name):
         return
     target_dir = f"{OUT_DIR}/{run_name}"
-    logs_dir = f"{LOGS_DIR}/{run_name}"
+    # logs_dir = f"{LOGS_DIR}/{run_name}"
     valid, frame = provider.read()
 
     if not valid:

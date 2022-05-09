@@ -1,15 +1,16 @@
+import warnings
 import numpy as np
 
 from pipeline.pipeline_utils import *
 from utils_3DV import *
-import warnings
+
 
 def run(source, run_name, export_size, detector=None, classifier=None, deca=None):
     warnings.filterwarnings("ignore", category=UserWarning) 
     if not init_dir(run_name):
         return
     target_dir = f"{OUT_DIR}/{run_name}"
-    logs_dir = f"{LOGS_DIR}/{run_name}"
+    # logs_dir = f"{LOGS_DIR}/{run_name}"
     if detector is None and classifier is None:
         print("Loading classified patches...")
         faces, identities = load_classified_patches(source)
@@ -22,11 +23,6 @@ def run(source, run_name, export_size, detector=None, classifier=None, deca=None
             faces = []
             num_frames = int(source.get(cv2.CAP_PROP_FRAME_COUNT))
             for frame_idx in tqdm(range(num_frames)):
-                if frame_idx > 500:
-                    break
-                elif frame_idx < 400:
-                    valid, frame = source.read()
-                    continue
                 valid, frame = source.read()
                 bboxes = detector.detect(frame)
 
