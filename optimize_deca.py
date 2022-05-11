@@ -1,6 +1,5 @@
 from reconstruction.improving_deca.trainer import Trainer
 from reconstruction.improving_deca.model import OptimizerNN
-
 from torch.optim import Adam
 
 if __name__ == "__main__":

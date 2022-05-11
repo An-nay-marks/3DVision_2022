@@ -2,13 +2,13 @@ import random
 import numpy as np
 
 from torch.utils.data import DataLoader, Subset
-from dataloader import OptDataLoader
+from .dataloader import OptDataLoader
 from utils_3DV import *
-from reconstruction.deca import DECA
+from reconstruct import initialize_deca
 
 
 class Trainer:
-    def __init__(self, model, optimizer, experiment_name, num_epochs, load_checkpoint_path = None, run_name=None,
+    def __init__(self, model, optimizer, experiment_name, num_epochs, load_checkpoint_path=None, run_name=None,
                  split=0.8, batch_size=1, loss_function=None, scheduler=None, evaluation_interval=10,
                  num_samples_to_visualize=6, checkpoint_interval=50):
         """
@@ -32,11 +32,11 @@ class Trainer:
         self.optimizer = optimizer
         self.experiment_name = experiment_name
         self.num_epochs = num_epochs
-        self.DECA_model = DECA(device = DEVICE)
-        
-        self.dataloader = OptDataLoader(self.DECA_model)
+        self.model = initialize_deca()
+
+        self.dataloader = OptDataLoader(self.model)
         self.training_dataloader, self.test_dataloader = self.dataloader.getDataLoaders()
-        
+
         self.run_name = run_name if run_name is not None else get_current_datetime_as_str()
         self.split = split
         self.batch_size = batch_size
@@ -65,46 +65,46 @@ class Trainer:
 
             self.train_loader = self.dataloader.get_training_dataloader(split=self.split, batch_size=self.batch_size)
             self.test_loader = self.dataloader.get_testing_dataloader(batch_size=1)
-            
+
             print(f'Using device: {DEVICE}\n')
             self.attention_model = self.attention_model.to(DEVICE)
-            self.DECA_model = self.DECA_model.to(DEVICE)
-            
+            self.model = self.model.to(DEVICE)
+
             if self.load_checkpoint_path is not None:
                 self._load_checkpoint(self.load_checkpoint_path)
 
             callback_handler = Trainer.Callback(self, self.attention_model)
-            
+
             for epoch in range(self.num_epochs):
                 train_loss = self._train_step(callback_handler=callback_handler)
-                test_loss = self._eval_step(self.attention_model, DEVICE, self.test_loader)
+                test_loss = self._eval_step(self.test_loader)
                 metrics = {'train_loss': train_loss, 'test_loss': test_loss}
 
-                print('\nEpoch %i finished at {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()) % epoch)
+                print('\nEpoch %i finished at {:%Y-%m-%d %H:%M:%S}'.format(datetime.now()) % epoch)
                 print('Metrics: %s\n' % str(metrics))
                 # TODO: log metrics, iteration number, logfiles
-                
+
             if self.do_checkpoint:
                 # save final checkpoint
                 self._save_checkpoint(self.attention_model, None, None, None)
-            
-            print('\nTraining finished at {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))
+
+            print('\nTraining finished at {:%Y-%m-%d %H:%M:%S}'.format(datetime.now()))
             # TODO: final logging
 
     def _train_step(self, callback_handler):
         self.attention_model.train()
-        self.DECA_model.eval()
+        self.model.eval()
         opt = self.optimizer
         train_loss = 0
-        for (x,y) in self.train_loader:
+        for (x, y) in self.train_loader:
             x = x.to(DEVICE)
             weights = self.attention_model(x).tolist()
             dictionaries = []
             weighted_reconstructions = []
             for idx, patch in enumerate(x):
-                encoding_dic = self.DECA_model.encode(patch)
+                encoding_dic = self.model.encode(patch)
                 encoding_dic['shape'] *= weights[idx]  # TODO: test if this syntax even works with dictionaries
-                reconstruction = self.DECA_model.decode(encoding_dic)
+                reconstruction = self.model.decode(encoding_dic)
                 dictionaries.append(encoding_dic.detach().cpu())
                 weighted_reconstructions.append(reconstruction.detach().cpu())
                 del encoding_dic
@@ -128,7 +128,7 @@ class Trainer:
 
     def _eval_step(self, test_loader):
         self.attention_model.eval()
-        self.DECA_model.eval()
+        self.model.eval()
         test_loss = 0
         with torch.no_grad():
             for (x, y) in test_loader:
@@ -137,9 +137,9 @@ class Trainer:
                 dictionaries = []
                 weighted_reconstructions = []
                 for idx, patch in enumerate(x):
-                    encoding_dic = self.DECA_model.encode(patch)
-                    encoding_dic['shape'] *= weights[idx] #TODO: test if this syntax even works with dictionaries
-                    reconstruction = self.DECA_model.decode(encoding_dic)
+                    encoding_dic = self.model.encode(patch)
+                    encoding_dic['shape'] *= weights[idx]  # TODO: test if this syntax even works with dictionaries
+                    reconstruction = self.model.decode(encoding_dic)
                     dictionaries.append(encoding_dic.detach().cpu())
                     weighted_reconstructions.append(reconstruction.detach().cpu())
                     del encoding_dic
@@ -153,7 +153,7 @@ class Trainer:
                 del y
             test_loss /= len(test_loader.dataset)
         return test_loss
-    
+
     def _get_hyperparams(self):
         """
         Returns a dict of what is considered a hyperparameter
@@ -165,7 +165,7 @@ class Trainer:
             'optimizer': self.optimizer_or_lr,
             'loss function': self.loss_function,
         }
-    
+
     # Visualizations are created using the "create_visualizations" functions of the Trainer
     def create_visualizations(self, file_path):
         # sample image indices to visualize
@@ -182,14 +182,14 @@ class Trainer:
             # just visualize the entire test set
             indices = np.array(list(range(len(self.test_loader))))
         else:
-            indices = np.array(list(range(num_fixed_samples)) +\
-                            random.sample(range(num_fixed_samples + 1, len(self.test_loader)), num_random_samples))
+            indices = np.array(list(range(num_fixed_samples)) + \
+                               random.sample(range(num_fixed_samples + 1, len(self.test_loader)), num_random_samples))
         images = []
         # never exceed the given training batch size, else we might face memory problems
         vis_batch_size = min(num_to_visualize, self.batch_size)
         subset_ds = Subset(self.test_loader.dataset, indices)
         subset_dl = DataLoader(subset_ds, batch_size=vis_batch_size, shuffle=False)
-        
+
         for (batch_xs, batch_ys) in subset_dl:
             batch_xs, batch_ys = batch_xs.to(DEVICE), batch_ys.numpy()
             output = self.attention_model(batch_xs)
@@ -201,7 +201,7 @@ class Trainer:
 
     def _save_checkpoint(self, model, epoch, epoch_iteration, total_iteration):
         if None not in [epoch, epoch_iteration, total_iteration]:
-            checkpoint_path = f'{CHECKPOINT_DIR}/cp_ep-{"%05i" % epoch}_epit-{"%05i" % epoch_iteration}' +\
+            checkpoint_path = f'{CHECKPOINT_DIR}/cp_ep-{"%05i" % epoch}_epit-{"%05i" % epoch_iteration}' + \
                               f'_step-{total_iteration}.pt'
         else:
             checkpoint_path = f'{CHECKPOINT_DIR}/cp_final.pt'
@@ -210,7 +210,7 @@ class Trainer:
             'model': model.state_dict(),
             'optimizer': self.optimizer_or_lr.state_dict()
         }, checkpoint_path)
-        
+
         # checkpoints should be logged right after their creation, in case training is
         # stopped/crashes *without* reaching the final checkpoint 
         # TODO: log checkpoints
@@ -233,6 +233,7 @@ class Trainer:
         gets initialized once every train() call
         gets called on each batch end and on each epoch end to save information at checkpoints
         """
+
         def __init__(self, trainer, model):
             super().__init__()
             self.model = model
@@ -251,16 +252,17 @@ class Trainer:
                 metrics = {'precision': precision, 'recall': recall, 'f1_score': f1_score}
                 print('Metrics at aggregate iteration %i (ep. %i, ep.-it. %i): %s'
                       % (self.iteration_idx, self.epoch_idx, self.epoch_iteration_idx, str(metrics)))
-                #TODO: log metrics (loss, etc.) here
-                
-                if self.trainer.do_checkpoint\
-                   and self.iteration_idx % self.trainer.checkpoint_interval == 0\
-                   and self.iteration_idx > 0:  # avoid creating checkpoints at iteration 0
-                    self.trainer._save_checkpoint(self.trainer.model, self.epoch_idx, self.epoch_iteration_idx, self.iteration_idx)
+                # TODO: log metrics (loss, etc.) here
+
+                if self.trainer.do_checkpoint \
+                        and self.iteration_idx % self.trainer.checkpoint_interval == 0 \
+                        and self.iteration_idx > 0:  # avoid creating checkpoints at iteration 0
+                    self.trainer._save_checkpoint(self.trainer.model, self.epoch_idx, self.epoch_iteration_idx,
+                                                  self.iteration_idx)
 
             self.iteration_idx += 1
             self.epoch_iteration_idx += 1
-    
+
         def on_epoch_end(self):
             self.epoch_idx += 1
             self.epoch_iteration_idx = 0

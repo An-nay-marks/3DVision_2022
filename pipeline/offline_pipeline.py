@@ -6,11 +6,13 @@ from utils_3DV import *
 
 
 def run(source, run_name, export_size, detector=None, classifier=None, deca=None):
-    warnings.filterwarnings("ignore", category=UserWarning) 
-    if not init_dir(run_name):
-        return
+    warnings.filterwarnings("ignore", category=UserWarning)
     target_dir = f"{OUT_DIR}/{run_name}"
     # logs_dir = f"{LOGS_DIR}/{run_name}"
+
+    if not init_dir(target_dir):
+        return
+
     if detector is None and classifier is None:
         print("Loading classified patches...")
         faces, identities = load_classified_patches(source)
@@ -52,28 +54,31 @@ def run(source, run_name, export_size, detector=None, classifier=None, deca=None
 
         faces = faces[best_idx]
         identities = identities[best_idx]
-    
-    if deca is None:
-        print("Exporting patches...")
-        for face_idx, (identity, patch) in enumerate(tqdm(zip(identities, faces), total=len(faces))):
+
+    print("Exporting patches..." if deca is None else "Reconstructing faces...")
+
+    with tqdm(total=len(identities)) as pbar:
+        for identity in np.unique(identities):
             name = identity if classifier is None else classifier.get_name(identity)
             sample_dir = create_id_export_dir(target_dir, name)
-            patch = resize_face(patch, export_size)
-            cv2.imwrite(os.path.join(sample_dir, f'patch_{face_idx + 1}.jpg'), patch)
-        
-    else:
-        # Reconstruction, optionally with optimizer
-        reconstructions, identity_names, sample_names = deca.reconstruct(identities, faces, classifier)
-        # save reconstructions by identity and optionally sample name
-        use_sample_names = len(sample_names) > 0
-        print("Exporting reconstructions...")
-        for idx, (reconstruction, identity_name) in enumerate(tqdm(zip(reconstructions, identity_names), total=len(reconstructions))):
-            target_subdir = create_id_export_dir(target_dir, identity_name)
-            object_name = identity_name
-            if use_sample_names:
-                sample_name = sample_names[idx]
-                target_subdir = os.path.join(target_subdir, sample_name)
-                os.makedirs(target_subdir, exist_ok=True)
-                object_name = sample_name
-            path = os.path.join(target_subdir, f'{object_name}.obj')
-            deca.save_obj(path, reconstruction)
+            id_patches = faces[np.where(identities == identity)]
+
+            if deca is None:
+                for patch_idx, patch in enumerate(id_patches):
+                    patch_name = f'patch_{patch_idx + 1}'
+                    patch = resize_face(patch, export_size)
+                    cv2.imwrite(os.path.join(sample_dir, f'{patch_name}.jpg'), patch)
+                    pbar.update(1)
+            else:
+                reconstructions = deca.reconstruct_multiple(id_patches)
+                if len(reconstructions) == 1:
+                    # no need for patch directory if there is only one reconstruction
+                    deca.save_obj(os.path.join(sample_dir, f'{name}.obj'), reconstructions[0])
+                else:
+                    for patch_idx, reconstruction in enumerate(reconstructions):
+                        patch_name = f'patch_{patch_idx + 1}'
+                        patch_dir = os.path.join(sample_dir, patch_name)
+                        os.makedirs(patch_dir)
+                        deca.save_obj(os.path.join(patch_dir, f'{patch_name}.obj'), reconstruction)
+
+                pbar.update(len(id_patches))

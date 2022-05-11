@@ -1,24 +1,24 @@
-from imageio import read
 # from dependencies.NOW_EVAL import check_predictions, compute_error
-import dependencies.DECA.decalib.utils.util as decautil
-from .dataset import WeightingPatchesDataset, NoWDataset
-import numpy as np
-from torch.utils.data import Dataset
-from torch.utils.data import DataLoader as TorchDataLoader
-from tqdm import tqdm
 import os
-import torch
-from utils_3DV import read_lines_as_list, DEVICE
 import cv2
-import subprocess
+import numpy as np
+import torch
+import dependencies.DECA.decalib.utils.util as decautil
+
+from torch.utils.data import DataLoader as TorchDataLoader
+from torch.utils.data import Dataset
+from tqdm import tqdm
+
+from utils_3DV import read_lines_as_list, DEVICE
+from .dataset import WeightingPatchesDataset, NoWDataset
+
 
 class OptDataLoader(Dataset):
     def __init__(self, deca):
         self.reconstruction_score_file = "reconstruction_scores.txt"
         self.reconstruction_score_path = f"data/NoW_Dataset/final_release_version/{self.reconstruction_score_file}"
         self.deca = deca
-        
-        
+
         # check if NoW Dataset and all requirements available:
         for path in ["data/NoW_Dataset", "data/NoW_Dataset/final_release_version", "data/NoW_Dataset/final_release_version/scans", "data/NoW_Dataset/final_release_version/iphone_pictures", "data/NoW_Dataset/final_release_version/detected_face", "data/NoW_Dataset/final_release_version/imagepathsvalidation.txt"]:
             if not os.path.exists(path):
@@ -45,10 +45,8 @@ class OptDataLoader(Dataset):
             self.deca.eval()
             # run now validation images
             dataset = NoWDataset(scale=1.6)
-            dataloader = TorchDataLoader(dataset, batch_size=8, shuffle=False,
-                                num_workers=8,
-                                pin_memory=True,
-                                drop_last=False)
+            dataloader = TorchDataLoader(dataset, batch_size=8, shuffle=False, num_workers=8,
+                                         pin_memory=True, drop_last=False)
             faces = self.deca.flame.faces_tensor.cpu().numpy()
             for i, batch in enumerate(tqdm(dataloader, desc='now evaluation ')):
                 images = batch['image'].to(DEVICE)
