@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader as TorchDataLoader
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-from utils_3DV import read_lines_as_list, DEVICE
+from utils_3DV import read_lines_as_list, DEVICE, check_dataset
 from .dataset import WeightingPatchesDataset, NoWDataset
 
 
@@ -20,9 +20,7 @@ class OptDataLoader(Dataset):
         self.deca = deca
 
         # check if NoW Dataset and all requirements available:
-        for path in ["data/NoW_Dataset", "data/NoW_Dataset/final_release_version", "data/NoW_Dataset/final_release_version/scans", "data/NoW_Dataset/final_release_version/iphone_pictures", "data/NoW_Dataset/final_release_version/detected_face", "data/NoW_Dataset/final_release_version/imagepathsvalidation.txt"]:
-            if not os.path.exists(path):
-                raise FileNotFoundError("Please download the NoW evaluation scans and corresponding image, detected face data as well as imagepathsvalidation and put it into data/NoW_Dataset/final_release_version")
+        check_dataset()
         img_paths_list = read_lines_as_list("data/NoW_Dataset/final_release_version/imagepathsvalidation.txt")
         self.data_set = WeightingPatchesDataset(img_paths=img_paths_list, gt_path=self.reconstruction_score_path)
     

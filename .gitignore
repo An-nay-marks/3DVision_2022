@@ -1,5 +1,6 @@
 datasets/
 zzz_tests.py
+dependencies/*
 # so that the folders are still there:
 data/
 out/
