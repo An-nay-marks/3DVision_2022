@@ -61,8 +61,6 @@ def run(source, run_name, export_size, detector=None, classifier=None, deca=None
     with tqdm(total=len(identities)) as pbar:
         for identity in np.unique(identities):
             name = identity if classifier is None else classifier.get_name(identity)
-            if str(identity) != "id_2":
-                continue
             sample_dir = create_id_export_dir(target_dir, name)
             
             id_patches = [faces[i] for i in range(len(identities)) if identities[i] == identity]
@@ -74,10 +72,15 @@ def run(source, run_name, export_size, detector=None, classifier=None, deca=None
                     cv2.imwrite(os.path.join(sample_dir, f'{patch_name}.jpg'), patch)
                     pbar.update(1)
             else:
-                for patch_idx, patch in enumerate(id_patches):
-                    reconstruction = deca.reconstruct(patch)
-                    patch_name = f'patch_{patch_idx + 1}'
-                    patch_dir = os.path.join(sample_dir, patch_name)
-                    os.makedirs(patch_dir)
-                    deca.save_obj(os.path.join(patch_dir, f'{patch_name}.obj'), reconstruction)
-                    pbar.update(len(id_patches))
+                reconstructions = deca.reconstruct_multiple(id_patches)
+                if len(reconstructions) == 1:
+                    # no need for patch directory if there is only one reconstruction
+                    deca.save_obj(os.path.join(sample_dir, f'{name}.obj'), reconstructions[0])
+                else:
+                    for patch_idx, reconstruction in enumerate(reconstructions):
+                        patch_name = f'patch_{patch_idx + 1}'
+                        patch_dir = os.path.join(sample_dir, patch_name)
+                        os.makedirs(patch_dir)
+                        deca.save_obj(os.path.join(patch_dir, f'{patch_name}.obj'), reconstruction)
+
+                pbar.update(len(id_patches))
