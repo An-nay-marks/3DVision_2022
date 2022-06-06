@@ -37,14 +37,15 @@ class MeanShiftFaceClassifier(_ClusterFaceClassifier, cluster.MeanShift):
         encodings, labels = super().classify_all(faces)
 
         nn_idx = []
-        nn = neighbors.NearestNeighbors(n_neighbors=min(100, len(encodings) // 4))
+        nn = neighbors.NearestNeighbors(n_neighbors=min(20, len(encodings) // 4))
         nn.fit(encodings)
 
         for center in self.cluster_centers_:
             nbs = nn.kneighbors(np.expand_dims(center, axis=0), return_distance=False)
-            nn_idx.append(nbs[0][0])
+            # nn_idx.append(nbs[0][0])
+            nn_idx.append(nbs)
 
-        return labels, np.asarray(nn_idx)
+            return labels, np.asarray(nn_idx)
 
 
 class AgglomerativeFaceClassifier(_ClusterFaceClassifier, cluster.AgglomerativeClustering):
