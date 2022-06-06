@@ -84,12 +84,23 @@ def classify_and_visualize_for_offline_classifiers(run_name, classifier = None, 
         # no embedding --> just visualize in a grid 20 random images
         patches = np.asarray(patches, dtype=object)
         identities, best_idx = classifier.classify_all(patches)
-        patches = patches[best_idx]
-        identities = identities[best_idx]
+        #patches = patches[best_idx]
+        #identities = identities[best_idx]
         fig, plt = __get_plt_for_grid_vis(patches, identities)
-        plt.savefig(f"{target_folder}/grid_visualization_of_classes.png")
+        plt.axis('off')
+        plt.tick_params(axis='x', which='both', bottom=False,
+                        top=False, labelbottom=False)
+        # Selecting the axis-Y making the right and left axes False
+        plt.tick_params(axis='y', which='both', right=False,
+                        left=False, labelleft=False)
+        # Iterating over all the axes in the figure
+        # and make the Spines Visibility as False
+        for pos in ['right', 'top', 'bottom', 'left']:
+            plt.gca().spines[pos].set_visible(False)
+        plt.savefig(f"{target_folder}/grid_visualization_of_classes.png", bbox_inches='tight', pad_inches=0)
+        plt.show()
     print(f"...Done! Check out your visualization: {target_folder}")
-        
+
 def visualize_classified_patches_in_grid(target_folder, path_to_classified_patches):
     """Visualizes already classified patches in a grid of class_numbers x 20
 
@@ -99,6 +110,7 @@ def visualize_classified_patches_in_grid(target_folder, path_to_classified_patch
     """
     patches, identities = load_classified_patches(path_to_classified_patches)
     fig, plt = __get_plt_for_grid_vis(patches, identities)
+    plt.axis('off')
     plt.savefig(f"{target_folder}/grid_visualization_of_classes_1.png")
 
 def __get_plt_for_grid_vis(patches, identities):
@@ -113,9 +125,7 @@ def __get_plt_for_grid_vis(patches, identities):
         num_imgs_of_class = min(len(unique_patches), 20)
         # pick 20 (or less if less classes) random patches of that class
         random_idxs = [random.randint(0,len(unique_patches)-1) for i in range(num_imgs_of_class)]
-        for col_idx in range(num_imgs_of_class):
-            random_idx = random_idxs[col_idx] # get specific random index
-            img = unique_patches[random_idx][:,:,[2,1,0]] # get patch at random index and permute channels from opencv to fit matplotlib
+        for col_idx in range(20):
             if rows == 1: # matplotlib automatically squeezes dimensions
                 ax = axs[col_idx]
             else:
@@ -123,15 +133,22 @@ def __get_plt_for_grid_vis(patches, identities):
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
             ax.grid(False)
-            ax.set_xticks([]) #get rid of lines
-            ax.set_yticks([])
-            ax.imshow(img)
-            
+            #ax.set_xticks([]) #get rid of lines
+            #ax.set_yticks([])
+            if col_idx < num_imgs_of_class: # only plot available images
+                random_idx = random_idxs[col_idx] # get specific random index
+                img = unique_patches[random_idx][:,:,[2,1,0]] # get patch at random index and permute channels from opencv to fit matplotlib
+                ax.imshow(img)
+            else:
+                ax.xaxis.set_visible(False)
+                ax.yaxis.set_visible(False)
+                for spine in ['top', 'right', 'left', 'bottom']:
+                    ax.spines[spine].set_visible(False)
     return fig, plt
     
 
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
-    # classify_and_visualize_for_offline_classifiers(classifier = "agglomerative", run_name="test_samples_visualization", path_to_classified_patches=f"{ROOT_DIR}\\out\\test_samples", use_pca=True)
-    # classify_and_visualize_for_offline_classifiers(classifier = "agglomerative", run_name="test_samples_visualization_grid", path_to_classified_patches=f"{ROOT_DIR}\\out\\test_samples", use_pca=False)
+    # classify_and_visualize_for_offline_classifiers(classifier = "agglomerative", run_name="test_samples_visualization", path_to_raw_patches=f"{ROOT_DIR}\\out\\test_samples", use_pca=True)
+    classify_and_visualize_for_offline_classifiers(classifier = "vgg", run_name="vgg_classification", path_to_raw_patches=f"{ROOT_DIR}\\out\\test_samples_Deniz", use_pca=False)
     # visualize_classified_patches_in_grid(run_name="test_samples_visualization_grid", path_to_classified_patches=f"{ROOT_DIR}\\out\\test_samples")
