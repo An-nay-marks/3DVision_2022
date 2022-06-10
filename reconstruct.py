@@ -19,7 +19,7 @@ def initialize_deca(merge_fn):
     albedo_file = f'{ROOT_DIR}/data/model_files/FLAME_albedo_from_BFM.npz'
 
     if not os.path.exists(albedo_file):
-        print('WARNING: Albedo File not found. Reconstruction will be performed without albedo.', file=sys.stderr)
+        print('WARNING: Albedo file not found. Reconstruction will be performed without albedo.', file=sys.stderr)
         albedo_file = None
 
     return DECAFaceReconstruction(deca_file, flame_file, albedo_file, merge_fn)

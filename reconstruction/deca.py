@@ -3,7 +3,7 @@ import numpy as np
 import torch
 
 from dependencies.DECA.decalib.deca import DECA
-from dependencies.DECA.decalib.utils import config, util
+from dependencies.DECA.decalib.utils import config
 from utils_3DV import DEVICE
 
 
@@ -48,7 +48,7 @@ class DECAFaceReconstruction(DECA):
                 encodings.append(enc)
 
             if self.merge_fn == "mean":
-                code_dict = self._average_all_parameters(encodings)
+                code_dict = self._average_all_params(encodings)
                 reconstruction, _ = self.decode(code_dict)
                 reconstructions.append(reconstruction)
             else:  # mean_shape
@@ -70,7 +70,7 @@ class DECAFaceReconstruction(DECA):
         return int(nearest_idx)
 
     @staticmethod
-    def _average_all_parameters(encodings):
+    def _average_all_params(encodings):
         code_dict = dict()
         param_keys = encodings[0].keys()
         for key in [k for k in param_keys if k != 'images']:
@@ -89,31 +89,3 @@ class DECAFaceReconstruction(DECA):
             code_dict['shape'] = DECAFaceReconstruction._get_parameter_mean(encodings, 'shape')
             new_encodings.append(code_dict)
         return new_encodings
-
-    def save_obj(self, filename, opdict):
-        """
-        adapted from original DECA repository: added one detach
-        vertices: [nv, 3], tensor
-        texture: [3, h, w], tensor
-        """
-        i = 0
-        vertices = opdict['verts'][i].cpu().numpy()
-        faces = self.render.faces[0].cpu().numpy()
-        texture = util.tensor2image(opdict['uv_texture_gt'][i])
-        uvcoords = self.render.raw_uvcoords[0].cpu().numpy()
-        uvfaces = self.render.uvfaces[0].cpu().numpy()
-        # save coarse mesh, with texture and normal map
-        normal_map = util.tensor2image(opdict['uv_detail_normals'][i] * 0.5 + 0.5)
-        util.write_obj(filename, vertices, faces,
-                       texture=texture,
-                       uvcoords=uvcoords,
-                       uvfaces=uvfaces,
-                       normal_map=normal_map)
-        # upsample mesh, save detailed mesh
-        texture = texture[:, :, [2, 1, 0]]
-        normals = opdict['normals'][i].cpu().numpy()
-        displacement_map = opdict['displacement_map'][i].detach().cpu().numpy().squeeze()
-        dense_vertices, dense_colors, dense_faces = util.upsample_mesh(vertices, normals, faces, displacement_map,
-                                                                       texture, self.dense_template)
-        util.write_obj(filename.replace('.obj', '_detail.obj'), dense_vertices, dense_faces,
-                       colors=dense_colors, inverse_face_order=True)

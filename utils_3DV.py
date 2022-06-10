@@ -12,16 +12,14 @@ from datetime import datetime
 
 # global constants
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = f"{ROOT_DIR}/out"
-LOGS_DIR = f"{ROOT_DIR}/logs"
+OUT_DIR = os.path.join(ROOT_DIR, 'out')
+LOGS_DIR = os.path.join(ROOT_DIR, 'logs')
+CHECKPOINTS_DIR = os.path.join(ROOT_DIR, 'checkpoints')
 
 DETECTORS = ['scrfd', 'yolo5']
 ONLINE_CLASSIFIERS = ['real-time', 'vgg']
 OFFLINE_CLASSIFIERS = ['agglomerative', 'dbscan', 'mean-shift', 'vgg']
-MERGE_STRATEGIES = ['single', 'mean', 'mean_shape']
-SESSION_ID = int(time.time() * 1000)
-CHECKPOINTS_DIR = os.path.join(LOGS_DIR, "checkpoints")
-CHECKPOINT_DIR = os.path.join(CHECKPOINTS_DIR, str(SESSION_ID))
+MERGE_STRATEGIES = ['single', 'mean', 'mean_shape', 'predictive']
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def get_default_parser():

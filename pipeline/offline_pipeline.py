@@ -57,7 +57,6 @@ def run(source, run_name, export_size, detector=None, classifier=None, deca=None
         identities = identities[best_idx]
 
     print("Exporting patches..." if deca is None else "Reconstructing faces...")
-
     with tqdm(total=len(identities)) as pbar:
         for identity in np.unique(identities):
             name = identity if classifier is None else classifier.get_name(identity)
