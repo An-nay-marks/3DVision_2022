@@ -3,7 +3,6 @@ from glob import glob
 
 import torch
 import numpy as np
-import cv2
 
 from skimage.io import imread
 from skimage.transform import estimate_transform, warp
@@ -12,7 +11,7 @@ from utils_3DV import ROOT_DIR, DEVICE
 
 
 class NoWDataset(Dataset):
-    def __init__(self, split, train_ratio, crop_size=224, scale=1.6):
+    def __init__(self, split, train_ratio, crop_size=224, scale=1.6, dist_path=None):
         self.scale = scale
         self.crop_size = crop_size
 
@@ -29,20 +28,19 @@ class NoWDataset(Dataset):
         train_size = int(len(self.data_lines) * train_ratio)
         if split == 'train':
             self.data_lines = self.data_lines[:train_size]
+            self.distances = np.load(dist_path)[:train_size] if dist_path else None
         elif split == 'test':
             self.data_lines = self.data_lines[train_size:]
+            self.distances = np.load(dist_path)[train_size:] if dist_path else None
+
+        if self.distances is not None:
+            assert len(self.data_lines) == len(self.distances)
 
     def __len__(self):
         return len(self.data_lines)
 
-    def __getitem__(self, index):
-        img_path = os.path.join(self.image_dir, self.data_lines[index] + 'jpg')
-        bbox_path = os.path.join(self.bbox_dir, self.data_lines[index] + 'npy')
+    def _load_image(self, img_path, bbox_path):
         bbox_data = np.load(bbox_path, allow_pickle=True, encoding='latin1').item()
-
-        subject = self.data_lines[index].split('/')[0]
-        gt_mesh_path = glob(os.path.join(self.scan_dir, subject, '*.obj'))[0]
-        gt_lmk_path = (glob(os.path.join(self.lmk_dir, subject, '*.pp'))[0])
 
         left = bbox_data['left']
         right = bbox_data['right']
@@ -63,4 +61,18 @@ class NoWDataset(Dataset):
         image = imread(img_path)[:, :, :3] / 255.
         dst_image = warp(image, tform.inverse, output_shape=(self.crop_size, self.crop_size))
         dst_image = dst_image.transpose(2, 0, 1)
-        return torch.tensor(dst_image).float().to(DEVICE), gt_mesh_path, gt_lmk_path
+        return torch.tensor(dst_image).float().to(DEVICE)
+
+    def __getitem__(self, index):
+        subject = self.data_lines[index].split('/')[0]
+        gt_mesh_path = glob(os.path.join(self.scan_dir, subject, '*.obj'))[0]
+        gt_lmk_path = (glob(os.path.join(self.lmk_dir, subject, '*.pp'))[0])
+
+        img_path = os.path.join(self.image_dir, self.data_lines[index] + 'jpg')
+        bbox_path = os.path.join(self.bbox_dir, self.data_lines[index] + 'npy')
+        img = self._load_image(img_path, bbox_path)
+
+        if self.distances is None:
+            return img, gt_mesh_path, gt_lmk_path,
+        else:
+            return img, self.distances[index]

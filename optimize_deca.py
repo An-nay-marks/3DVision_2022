@@ -9,7 +9,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters())
     loss_function = torch.nn.MSELoss()
     trainer = Trainer(model, optimizer, loss_function)
-    trainer.train(num_epochs=50)
+    trainer.train(num_epochs=500)
 
 
 if __name__ == "__main__":

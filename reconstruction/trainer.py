@@ -10,13 +10,10 @@ from reconstruct import initialize_deca
 from reconstruction.now import NoWDataset
 from utils_3DV import *
 
-sys.path.append('dependencies/now_evaluation')
-from dependencies.now_evaluation.compute_error import compute_error_metric
-
 
 class Trainer:
     def __init__(self, model, optimizer, loss_function, checkpoint_path=None, name=None, split=0.8, batch_size=8,
-                 evaluation_interval=2, checkpoint_interval=1):
+                 evaluation_interval=2, checkpoint_interval=5):
         """
         class for model trainers.
         Args:
@@ -44,10 +41,11 @@ class Trainer:
         self.evaluation_interval = evaluation_interval
         self.checkpoint_interval = checkpoint_interval
 
-        train_data = NoWDataset('train', self.train_ratio)
-        self.train_loader = DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
+        dist_path = os.path.join(ROOT_DIR, 'data', 'now_dist.npy')
+        train_data = NoWDataset('train', self.train_ratio, dist_path=dist_path)
+        test_data = NoWDataset('test', self.train_ratio, dist_path=dist_path)
 
-        test_data = NoWDataset('test', self.train_ratio)
+        self.train_loader = DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
         self.test_loader = DataLoader(test_data, batch_size=self.batch_size, shuffle=True)
 
         if checkpoint_path is not None:
@@ -97,23 +95,30 @@ class Trainer:
         print('Training finished at {:%Y-%m-%d %H:%M:%S}'.format(datetime.now()))
 
     def _process_batch(self, batch, faces):
-        images, gt_mesh_paths, gt_lmk_paths = batch
-
+        images = batch[0]
         scores = self.model(images).squeeze(1)
-        encoding = self.deca.encode(images)
-        reconstruction, _ = self.deca.decode(encoding)
 
-        verts = reconstruction['verts'].cpu().numpy()
-        landmark_51 = reconstruction['landmarks3d_world'][:, 17:]
-        landmark_7 = landmark_51[:, [19, 22, 25, 28, 16, 31, 37]]
-        landmark_7 = landmark_7.cpu().numpy()
-        distances = torch.zeros(images.shape[0])
+        if len(batch) == 3:
+            gt_mesh_paths, gt_lmk_paths = batch[1:]
+            sys.path.append('dependencies/now_evaluation')
+            from dependencies.now_evaluation.compute_error import compute_error_metric
 
-        for k in range(images.shape[0]):
-            pred_mesh = Mesh(basename=f'img_{k}', v=verts[k], f=faces)
-            pred_lmk = landmark_7[k]
-            landmark_dist = compute_error_metric(gt_mesh_paths[k], gt_lmk_paths[k], pred_mesh, pred_lmk)
-            distances[k] = np.sum(landmark_dist)
+            encoding = self.deca.encode(images)
+            reconstruction, _ = self.deca.decode(encoding)
+
+            verts = reconstruction['verts'].cpu().numpy()
+            landmark_51 = reconstruction['landmarks3d_world'][:, 17:]
+            landmark_7 = landmark_51[:, [19, 22, 25, 28, 16, 31, 37]]
+            landmark_7 = landmark_7.cpu().numpy()
+            distances = torch.zeros(images.shape[0])
+
+            for k in range(images.shape[0]):
+                pred_mesh = Mesh(basename=f'img_{k}', v=verts[k], f=faces)
+                pred_lmk = landmark_7[k]
+                landmark_dist = compute_error_metric(gt_mesh_paths[k], gt_lmk_paths[k], pred_mesh, pred_lmk)
+                distances[k] = np.sum(landmark_dist)
+        else:
+            distances = torch.Tensor(batch[1])
 
         distances = distances.to(DEVICE)
         return self.loss_function(scores, distances)
