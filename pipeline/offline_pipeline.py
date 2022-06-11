@@ -14,6 +14,7 @@ class OfflinePipeline():
         self.deca=deca
         self.target_dir = f"{OUT_DIR}/{self.run_name}"
         self.faces = []
+        self.bboxes = None
         warnings.filterwarnings("ignore", category=UserWarning)
         
     def run(self):
@@ -77,8 +78,8 @@ class OfflinePipeline():
             if notifier is not None:
                 notifier.status(frame_idx)
             valid, frame = self.source.read()
-            bboxes = self.detector.detect(frame)
-
+            self.bboxes = self.detector.detect(frame)
+            
             for face_idx, face in enumerate(bboxes):
                 left, top, right, bottom = pad_face(frame, *face[:-1].astype(int))
 
@@ -93,6 +94,7 @@ class OfflinePipeline():
                     cv2.imwrite(os.path.join(sample_dir, f'patch_{face_idx + 1}.jpg'), face_patch)
                 else:
                     self.faces.append(face_patch)
+    
     
     def classify(self):
         print("Loading unclassified patches...")

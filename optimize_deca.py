@@ -1,8 +1,16 @@
-from reconstruction.improving_deca.trainer import Trainer
-from reconstruction.improving_deca.model import OptimizerNN
-from torch.optim import Adam
+import torch
+
+from reconstruction.trainer import Trainer
+from reconstruction.model import OptimizerNN
+
+
+def main():
+    model = OptimizerNN()
+    optimizer = torch.optim.Adam(model.parameters())
+    loss_function = torch.nn.MSELoss()
+    trainer = Trainer(model, optimizer, loss_function)
+    trainer.train(num_epochs=50)
+
 
 if __name__ == "__main__":
-    model = OptimizerNN(2)
-    optimizer = Adam(model.parameters())
-    trainer = Trainer(model=model, optimizer=optimizer, experiment_name="test", num_epochs=2, checkpoint_interval=1)
+    main()
