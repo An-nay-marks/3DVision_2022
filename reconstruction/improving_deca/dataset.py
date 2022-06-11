@@ -14,12 +14,13 @@ from torch.utils.data import dataset
 from utils_3DV import ROOT_DIR, check_dataset, pad_with_zeros
 
 
-def generate_blurry_patches(downscale, start_counter_offset):
-    """Generates downscaled images from the NoW Dataset.
+def augment_patches(downscale, start_counter_offset, flip=False):
+    """Generates downscaled images from the NoW Dataset and can additionally flip it.
 
     Args:
         downscale (float): between 0 and 1 to downscale, otherwise image will be upscaled
         start_counter_offset (int) offset for the FaMoS Number in order to avoid collision with existing data (always starting at 200000 + global offset)
+        flip (bool): whether to flip the patch or not
     """
     check_dataset()
     data_set = NoWDataset()
@@ -40,6 +41,8 @@ def generate_blurry_patches(downscale, start_counter_offset):
         # blurr iphone_pictures
         img = dict['original_image']
         img_downscaled = rescale(img, scale = (downscale, downscale, 1)) # x, y, rgb (don't change rgb)
+        if flip:
+            img_downscaled = img_downscaled[:, ::-1, :] # x, -y, color, horizontal flip
         target_image = img_as_ubyte(resize(img_downscaled, output_shape = img.shape)) # keep uint8 instead of float after resize
         # extract path names and target FaMoS nunmber
         FaMoS_number, expression_type, image_name = dict['imagename'].split('/') # e.g. FaMoS_180618_03331_TA/multiview_neutral/IMG_1216
