@@ -10,16 +10,15 @@ class OfflinePipeline:
         self.source = source
         self.run_name = run_name
         self.export_size = export_size
-        self.detector=detector
-        self.classifier=classifier
-        self.deca=deca
+        self.detector = detector
+        self.classifier = classifier
+        self.deca = deca
         self.target_dir = f"{OUT_DIR}/{self.run_name}"
         self.faces = []
         self.bboxes = None
         warnings.filterwarnings("ignore", category=UserWarning)
         
     def run(self):
-        # logs_dir = f"{LOGS_DIR}/{run_name}"
         if not init_dir(self.target_dir):
             return
         if self.detector is None and self.classifier is None:
@@ -67,13 +66,12 @@ class OfflinePipeline:
                         pbar.update(len(id_patches))
     
     def get_source(self):
-        self.num_frames = int(self.source.get(cv2.CAP_PROP_FRAME_COUNT))
-        return self.num_frames
+        return int(self.source.get(cv2.CAP_PROP_FRAME_COUNT))
     
     def detect(self, notifier = None):
         print("Detecting faces...")
-        self.get_source()
-        for frame_idx in tqdm(range(self.num_frames)):
+        num_frames = self.get_source()
+        for frame_idx in tqdm(range(num_frames)):
             if frame_idx < 1000 or frame_idx > 1050:
                 continue
             if notifier is not None:
@@ -95,8 +93,7 @@ class OfflinePipeline:
                     cv2.imwrite(os.path.join(sample_dir, f'patch_{face_idx + 1}.jpg'), face_patch)
                 else:
                     self.faces.append(face_patch)
-    
-    
+
     def classify(self):
         print("Loading unclassified patches...")
         self.faces = load_raw_patches(self.source)
@@ -105,7 +102,8 @@ class OfflinePipeline:
         self.identities, best_idx = self.classifier.classify_all(self.faces)
         self.faces = self.faces[best_idx]
         self.identities = self.identities[best_idx]
-    
+
+
     def save_classification(self):
         print("Exporting patches...")
         with tqdm(total=len(self.identities)) as pbar:

@@ -31,24 +31,28 @@ class DECAFaceReconstruction(DECA):
         return img
 
     @torch.no_grad()
-    def reconstruct(self, img):
-        img = self.preprocess(img)
+    def reconstruct(self, img, preprocessing=True):
+        if preprocessing:
+            img = self.preprocess(img)
         code_dict = self.encode(img)
         op_dict, _ = self.decode(code_dict)
         return op_dict
 
     @torch.no_grad()
-    def reconstruct_multiple(self, images):
+    def reconstruct_multiple(self, images, preprocessing=True):
         reconstructions = []
+
+        if preprocessing:
+            images = [self.preprocess(img) for img in images]
 
         if self.merge_fn == 'single':
             for img in images:
-                reconstruction = self.reconstruct(img)
+                reconstruction = self.reconstruct(img, False)
                 reconstructions.append(reconstruction)
         else:
             encodings = []
             for img in images:
-                enc = self.encode(self.preprocess(img))
+                enc = self.encode(img)
                 encodings.append(enc)
 
             if self.merge_fn == "mean":
@@ -60,7 +64,7 @@ class DECAFaceReconstruction(DECA):
                     reconstruction, _ = self.decode(code_dict)
                     reconstructions.append(reconstruction)
             else:  # predictive
-                images = torch.cat([self.preprocess(img) for img in images])
+                images = torch.cat(images)
                 scores = self.model(images)
                 # TODO weighted average of all or only shape?
 
@@ -81,16 +85,19 @@ class DECAFaceReconstruction(DECA):
     def _average_all_params(encodings, weights=None):
         code_dict = dict()
 
+        # TODO use weights
         if weights is None:
             weights = np.ones(len(encodings)) / len(encodings)
 
+        exceptions = ['tex', 'images']
         param_keys = encodings[0].keys()
-        for key in [k for k in param_keys if k not in ['tex', 'images']]:
+        for key in [k for k in param_keys if k not in exceptions]:
             code_dict[key] = DECAFaceReconstruction._get_parameter_mean(encodings, key)
 
         # use image of most representative sample
         nearest_idx = DECAFaceReconstruction._get_representative_sample(encodings, 'shape')
-        code_dict['images'] = encodings[nearest_idx]['images']
+        for key in exceptions:
+            code_dict[key] = encodings[nearest_idx][key]
         return code_dict
 
     @staticmethod
