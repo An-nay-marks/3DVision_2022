@@ -12,3 +12,4 @@
 # For Code:
 - only do reconstruction with mean optimization: `python reconstruct.py -r "test_reconstruction_mean" -lc <path_to_samples> -op "mean"`
 - only do reconstruction with mean shape optimization: `python reconstruct.py -r "test_reconstruction_mean_shape" -lc "<path_to_samples> -op "mean_shape"`
+- classification with extracted patches: `python classify.py -lr ""

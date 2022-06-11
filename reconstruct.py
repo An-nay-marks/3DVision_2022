@@ -1,5 +1,6 @@
 from classify import get_classification_parser, initialize_detector, initialize_classifier
-from pipeline import online_pipeline, offline_pipeline
+from pipeline.online_pipeline import OnlinePipeline
+from pipeline.offline_pipeline import OfflinePipeline
 from reconstruction.deca import DECAFaceReconstruction
 from utils_3DV import *
 
@@ -43,8 +44,9 @@ def run_reconstruction(source, run_name, online, specific_args):
         classifier = None
 
     deca = initialize_deca('single' if online else specific_args.merge)
-    pipeline = online_pipeline if online else offline_pipeline
-    pipeline.run(data_src, run_name, specific_args.patch_size, detector, classifier, deca)
+    pipeline = OnlinePipeline if online else OfflinePipeline
+    pipeline = pipeline(data_src, run_name, specific_args.patch_size, detector, classifier, deca)
+    pipeline.run()
 
 
 def main(default_args):

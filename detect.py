@@ -1,6 +1,7 @@
 from utils_3DV import *
 from detection import scrfd, yolo5
-from pipeline import online_pipeline, offline_pipeline
+from pipeline.online_pipeline import OnlinePipeline
+from pipeline.offline_pipeline import OfflinePipeline
 
 
 def get_detection_parser():
@@ -10,7 +11,6 @@ def get_detection_parser():
     parser.add_argument('--patch-size', type=int, nargs=2,
                         help='Patch size output (width, height), if specific size is required.')
     return parser
-
 
 def parse_args():
     parser = get_detection_parser()
@@ -32,8 +32,9 @@ def run_detection(source, run_name, online, specific_args):
 
     provider = initialize_video_provider(source)
     detector = initialize_detector(specific_args.detector)
-    pipeline = online_pipeline if online else offline_pipeline
-    pipeline.run(provider, run_name, specific_args.patch_size, detector)
+    pipeline =  OnlinePipeline if online else OfflinePipeline
+    pipeline = pipeline(provider, run_name, specific_args.patch_size, detector)
+    pipeline.run()
 
 
 def main(default_args):

@@ -1,5 +1,6 @@
 from utils_3DV import *
-from pipeline import online_pipeline, offline_pipeline
+from pipeline.online_pipeline import OnlinePipeline
+from pipeline.offline_pipeline import OfflinePipeline
 from detect import get_detection_parser, initialize_detector
 from recognition import arcface, real_time, vgg, clustering
 
@@ -49,8 +50,9 @@ def run_classification(source, run_name, online, specific_args):
         detector = None
 
     classifier = initialize_classifier(specific_args.classifier)
-    pipeline = online_pipeline if online else offline_pipeline
-    pipeline.run(data_src, run_name, specific_args.patch_size, detector, classifier)
+    pipeline =  OnlinePipeline if online else OfflinePipeline
+    pipeline = pipeline(data_src, run_name, specific_args.patch_size, detector, classifier)
+    pipeline.run()
 
 
 def main(default_args):
