@@ -4,7 +4,8 @@ import numpy as np
 from pipeline.pipeline_utils import *
 from utils_3DV import *
 
-class OfflinePipeline():
+
+class OfflinePipeline:
     def __init__(self, source, run_name, export_size, detector=None, classifier=None, deca=None):
         self.source = source
         self.run_name = run_name
@@ -78,7 +79,7 @@ class OfflinePipeline():
             if notifier is not None:
                 notifier.status(frame_idx)
             valid, frame = self.source.read()
-            self.bboxes = self.detector.detect(frame)
+            bboxes = self.detector.detect(frame)
             
             for face_idx, face in enumerate(bboxes):
                 left, top, right, bottom = pad_face(frame, *face[:-1].astype(int))
