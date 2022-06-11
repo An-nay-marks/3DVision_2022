@@ -2,11 +2,9 @@ import contextlib
 import tempfile
 
 import numpy as np
-from psbody.mesh import Mesh
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from reconstruct import initialize_deca
 from reconstruction.now import NoWDataset
 from utils_3DV import *
 
@@ -28,7 +26,6 @@ class Trainer:
             checkpoint_interval: how often to save model checkpoints (in epochs)
         """
         self.model = model.to(DEVICE)
-        self.deca = initialize_deca('single')
         self.optimizer = optimizer
 
         self.run_name = name or get_current_datetime_as_str()
@@ -42,10 +39,18 @@ class Trainer:
         self.checkpoint_interval = checkpoint_interval
 
         dist_path = os.path.join(ROOT_DIR, 'data', 'now_dist.npy')
-        train_data = NoWDataset('train', self.train_ratio, dist_path=dist_path)
-        test_data = NoWDataset('test', self.train_ratio, dist_path=dist_path)
 
+        if os.path.exists(dist_path):
+            self.deca = None
+        else:
+            from reconstruct import initialize_deca
+            self.deca = initialize_deca('single')
+            dist_path = None
+
+        train_data = NoWDataset('train', self.train_ratio, dist_path=dist_path)
         self.train_loader = DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
+
+        test_data = NoWDataset('test', self.train_ratio, dist_path=dist_path)
         self.test_loader = DataLoader(test_data, batch_size=self.batch_size, shuffle=True)
 
         if checkpoint_path is not None:
@@ -73,7 +78,6 @@ class Trainer:
         print(self._get_hyperparams())
 
         self.model.train()
-        self.deca.eval()
 
         for self.epoch in range(num_epochs):
             print(f'Epoch {self.epoch+1}/{num_epochs}')
@@ -94,23 +98,26 @@ class Trainer:
 
         print('Training finished at {:%Y-%m-%d %H:%M:%S}'.format(datetime.now()))
 
-    def _process_batch(self, batch, faces):
+    def _process_batch(self, batch):
         images = batch[0]
         scores = self.model(images).squeeze(1)
 
         if len(batch) == 3:
             gt_mesh_paths, gt_lmk_paths = batch[1:]
-            sys.path.append('dependencies/now_evaluation')
-            from dependencies.now_evaluation.compute_error import compute_error_metric
 
             encoding = self.deca.encode(images)
             reconstruction, _ = self.deca.decode(encoding)
+            faces = self.deca.flame.faces_tensor.cpu().numpy()
 
             verts = reconstruction['verts'].cpu().numpy()
             landmark_51 = reconstruction['landmarks3d_world'][:, 17:]
             landmark_7 = landmark_51[:, [19, 22, 25, 28, 16, 31, 37]]
             landmark_7 = landmark_7.cpu().numpy()
             distances = torch.zeros(images.shape[0])
+
+            sys.path.append('dependencies/now_evaluation')
+            from psbody.mesh import Mesh
+            from dependencies.now_evaluation.compute_error import compute_error_metric
 
             for k in range(images.shape[0]):
                 pred_mesh = Mesh(basename=f'img_{k}', v=verts[k], f=faces)
@@ -125,10 +132,10 @@ class Trainer:
 
     def _train_step(self):
         train_loss = 0
-        faces = self.deca.flame.faces_tensor.cpu().numpy()
+        self.model.train()
 
         for batch in tqdm(self.train_loader, file=sys.stdout):
-            loss = self._process_batch(batch, faces)
+            loss = self._process_batch(batch)
             train_loss += loss.item()
 
             self.optimizer.zero_grad()
@@ -140,10 +147,10 @@ class Trainer:
     @torch.no_grad()
     def _eval_step(self):
         test_loss = 0
-        faces = self.deca.flame.faces_tensor.cpu().numpy()
+        self.model.eval()
 
         for batch in tqdm(self.test_loader, file=sys.stdout):
-            loss = self._process_batch(batch, faces)
+            loss = self._process_batch(batch)
             test_loss += loss.item()
 
         return test_loss / len(self.test_loader)

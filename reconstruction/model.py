@@ -1,13 +1,15 @@
+import torch
 from torch import nn
 
 
 class OptimizerNN(nn.Sequential):
-    def __init__(self, num_conv_layers):
+    def __init__(self, checkpoint_path=None):
         # self.canny = ... # TODO
 
         layers = []
+        num_conv_layers = 10
         curr_channel_size = 3  # 3 for image +1 for Canny
-        kernel_size = 3
+        kernel_size = 5
 
         for i in range(num_conv_layers):
             next_channel_size = curr_channel_size + 3
@@ -16,6 +18,11 @@ class OptimizerNN(nn.Sequential):
 
         image_dim = 224 - num_conv_layers * (kernel_size - 1)
         super().__init__(*layers, BinaryLinearOutput(curr_channel_size * image_dim * image_dim))
+
+        if checkpoint_path:
+            checkpoint = torch.load(checkpoint_path)
+            self.epoch = checkpoint['epoch']
+            self.model.load_state_dict(checkpoint['model'])
 
 
 class ConvBatchNormRELU(nn.Sequential):
