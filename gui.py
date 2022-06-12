@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog as fd
+from tkinter import messagebox
 from gui_controller import Controller
 
 class GUI():
@@ -13,6 +14,7 @@ class GUI():
         font_button_text = ('Comic Sans MS',10)
         self.root = Tk()
         self.root.title(app_name)
+        self.root.protocol("WM_DELETE_WINDOW", self.__on_closing)
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         center_x = int(screen_width/2 - window_width / 2)
@@ -54,7 +56,11 @@ class GUI():
         self.pb = None
         self.pb_label = None
         self.pb_var = IntVar()
+        self.pb_var_2 = IntVar()
         self.pb_max_len = 0
+        self.pb_2 = None
+        self.pb_2_label = None
+        self.pb_2_max_len = 0
         self.curr_frame = self.start_win
         self.curr_user_info = self.user_info
         self.func = "start"
@@ -73,6 +79,11 @@ class GUI():
         self.detector_idx = StringVar()
         self.load_patches = False
         self.load_classified_patches = False
+    
+    def __on_closing(self):
+        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            self.root.destroy()
+            self.controller.exit()
     
     def __detect(self):
         """Detection Button pressed"""
@@ -110,8 +121,8 @@ class GUI():
         self.open_video_button.pack()
         self.open_folder_button = ttk.Button(self.curr_frame, text='Select Patches Folder', command=self.__select_directory)
         self.open_folder_button.pack()
-        self.open_classified_folder_button = ttk.Button(self.curr_frame, text='Select Classified Patches Folder', command=self.__select_directory)
-        self.open_classified_folder_button.pack
+        self.open_classified_folder_button = ttk.Button(self.curr_frame, text='Select Classified Patches Folder', command=self.__select_classified_directory)
+        self.open_classified_folder_button.pack()
         self.__init_return_button()
         self.curr_frame.pack(fill="both", expand=1)
         self.start_win.pack_forget()
@@ -153,6 +164,23 @@ class GUI():
             fun = self.controller.classify_gui
             text = "Run Classification"
             self.__show_run_button(fun, text)
+        elif self.func == "reconstruct":
+            if not self.load_classified_patches:
+                self.classifiers = []
+                for idx, classifier in enumerate(self.controller.get_classifiers()):
+                    new_radio_button = ttk.Radiobutton(self.curr_frame, text = classifier, value = str(idx), variable = self.classifier_idx)
+                    new_radio_button.pack(padx = 5, pady = 5)
+                    self.classifiers.append(new_radio_button)
+                self.classifier_idx.set(str(0))
+            self.merge_strategies = []
+            for idx, merge in enumerate(self.controller.get_merge_strategies()):
+                new_radio_button = ttk.Radiobutton(self.curr_frame, text = merge, value = str(idx), variable = self.merge_strategy_idx)
+                new_radio_button.pack(padx = 5, pady = 5)
+                self.merge_strategies.append(new_radio_button)
+            self.merge_strategy_idx.set(str(0))
+            fun = self.controller.reconstruction_gui
+            text = "Run Reconstruction"
+            self.__show_run_button(fun, text)
     
     def __select_video(self):
         filename = fd.askopenfilename(title='Select a Video', initialdir='/')
@@ -177,6 +205,17 @@ class GUI():
             self.load_patches = False
             if self.classifiers == []:
                 self.__show_radio_buttons()
+        elif self.func == "reconstruct":
+            self.curr_user_info["text"] = 'Reconstruction\nChange your selection and merge strategy or run the reconstruction'
+            if self.new_user_info is None:
+                self.new_user_info = ttk.Label(self.curr_frame, text=f'Selected File\n{filename}')
+                self.new_user_info.pack()
+            else:
+                self.new_user_info["text"] = f'Selected File\n{filename}'
+            self.load_patches = False
+            self.load_classified_patches = False
+            if self.classifiers == []:
+                self.__show_radio_buttons()
     
     def __select_directory(self):
         dir_name = fd.askdirectory(title='Select a Directory with already extracted Patches', initialdir='/')
@@ -194,70 +233,166 @@ class GUI():
             self.load_patches = True
             if self.classifiers == []:
                 self.__show_radio_buttons()
+        elif self.func == "reconstruct":
+            self.curr_user_info["text"] = 'Reconstruction\nChange your selection and merge strategy or run the reconstruction'
+            if self.new_user_info is None:
+                self.new_user_info = ttk.Label(self.curr_frame, text=f'Selected Patch Directory\n{dir_name}')
+                self.new_user_info.pack()
+            else:
+                self.new_user_info["text"] = f'Selected Patch Directory\n{dir_name}'
+            self.load_patches = True
+            self.load_classified_patches = False
+            if self.merge_strategies == []:
+                self.__show_radio_buttons()
+            
+    
+    def __select_classified_directory(self):
+        dir_name = fd.askdirectory(title='Select a Directory with already classified Patches', initialdir='/')
+        if dir_name =="": return
+        self.open_folder_button["text"] = 'Change Classified Patches Directory'
+        self.open_folder_button["command"] = self.__change_selected_classified_directory
+        self.controller.set_in_path(dir_name)
+        self.curr_user_info["text"] = 'Reconstruction\nChange your selection or run the reconstruction'
+        if self.new_user_info is None:
+            self.new_user_info = ttk.Label(self.curr_frame, text=f'Selected Classified Patch Directory\n{dir_name}')
+            self.new_user_info.pack()
+        else:
+            self.new_user_info["text"] = f'Selected Classified Patch Directory\n{dir_name}'
+        self.load_patches = False
+        self.load_classified_patches = True
+        if self.classifiers != []:
+            self.__unpack_radio_buttons_classifiers()
+        if self.merge_strategies == []:
+            self.__show_radio_buttons()
     
     def __change_selected_video(self):
         filename = fd.askopenfilename(title='Select a Video', initialdir='/')
         self.new_user_info["text"] = f'Selected File\n{filename}'
         self.load_patches = False
+        self.load_classified_patches = False
         self.controller.set_in_path(filename)
     
     def __change_selected_directory(self):
         dir_name = fd.askopenfilename(title='Select a Directory with already extracted Patches', initialdir='/')
-        self.new_user_info["text"] = f'Selected Directory\n{dir_name}'
-        self.load_patches = False
+        self.new_user_info["text"] = f'Selected Patch Directory\n{dir_name}'
+        self.load_patches = True
+        self.load_classified_patches = False
         self.controller.set_in_path(dir_name)
     
+    def __change_selected_classified_directory(self):
+        dir_class_name = fd.askopenfilename(title='Select a Directory with already classified Patches', initialdir='/')
+        self.new_user_info["text"] = f'Selected Classified Patches Directory\n{dir_class_name}'
+        self.load_patches = False
+        self.load_classified_patches = True
+        self.controller.set_in_path(dir_class_name)
+    
     def __clear_history(self): # needed to discard changes, if there is time: TODO: make code object oriented
-        vars_clear = [self.progress_frame, self.pb, self.pb_label, self.open_video_button, self.button_back_to_start, self.new_user_info, self.run_button, self.curr_user_info, self.open_folder_button, self.open_classified_folder_button]
+        vars_clear = [self.progress_frame, self.pb, self.pb_label, self.pb_2, self.pb_2_label, self.open_video_button, self.button_back_to_start, self.new_user_info, self.run_button, self.curr_user_info, self.open_folder_button, self.open_classified_folder_button]
         for var in vars_clear:
             if var is not None:
                 var.pack_forget()
                 var = None
         self.pb_var = IntVar()
+        self.pb_var_2 = IntVar()
         self.pb_max_len = 0
+        self.pb_2_max_len = 0
         self.curr_frame.pack_forget()
         self.curr_frame = self.start_win
         self.curr_user_info = self.user_info
         self.func = "start"
         self.detector_idx = StringVar()
-        self.merge_idx = StringVar()
+        self.merge_strategy_idx = StringVar()
         self.detectory_idx = StringVar()
         self.classifiers = []
         self.merge_strategies = []
         self.detectors = []
         self.load_patches = False
         self.load_classified_patches = False
+    
+    def __unpack_previous_frame(self):
+        vars_to_forget = [self.new_user_info, self.run_button, self.open_video_button, self.open_folder_button, self.open_classified_folder_button, *self.classifiers, *self.detectors, *self.merge_strategies]
+        for vari in vars_to_forget:
+            if vari is not None:
+                vari.pack_forget()
+    
+    def __unpack_radio_buttons_detectors(self):
+        for radio_button in self.detectors:
+            radio_button.pack_forget()
+            self.run_button.pack_forget()
+    
+    def __unpack_radio_buttons_classifiers(self):
+        for radio_button in self.classifiers:
+            radio_button.pack_forget()
+            self.run_button.pack_forget()
+    
+    def __unpack_radio_buttons_merge_strategies(self):
+        for radio_button in self.merge_strategies:
+            radio_button.pack_forget()
+            self.run_button.pack_forget()
+    
+    def __visualize_classification(self):
+        # TODO
+        return
             
     def show_progress(self, len, func):
-        self.progress_frame = ttk.Frame(self.curr_frame)
-        self.progress_frame.columnconfigure(0, weight=1)
-        self.progress_frame.rowconfigure(0, weight=1)
-        self.pb = ttk.Progressbar(
-            self.progress_frame, orient=HORIZONTAL, mode='determinate', length=len, variable = self.pb_var)
-        self.pb_max_len = len
-        self.pb.pack()
-        self.progress_frame.pack()
-        self.pb_label = ttk.Label(self.progress_frame, text=f"{func}...0%")
-        self.pb_label.pack()
-        self.progress_frame.pack()
+        if func == "Detecting":
+            self.progress_frame = ttk.Frame(self.curr_frame)
+            self.progress_frame.columnconfigure(0, weight=1)
+            self.progress_frame.rowconfigure(0, weight=1)
+            self.progress_frame.pack()
+            self.pb = ttk.Progressbar(
+                self.progress_frame, orient=HORIZONTAL, mode='determinate', length=100, variable = self.pb_var)
+            self.pb_max_len = len
+            self.pb.pack()
+            self.pb_label = ttk.Label(self.progress_frame, text=f"{func}...0%")
+            self.pb_label.pack()
+        elif func == "Reconstructing":
+            if self.progress_frame is None:
+                self.progress_frame = ttk.Frame(self.curr_frame)
+                self.progress_frame.columnconfigure(0, weight=1)
+                self.progress_frame.rowconfigure(0, weight=1)
+                self.progress_frame.pack()
+            self.pb_2 = ttk.Progressbar(
+                self.progress_frame, orient=HORIZONTAL, mode='determinate', length=100, variable = self.pb_var_2)
+            self.pb_2_max_len = len
+            self.pb_2.pack()
+            self.pb_2_label = ttk.Label(self.progress_frame, text=f"{func}...0%")
+            self.pb_2_label.pack()            
+            
         if self.func == "detect":
             self.curr_user_info["text"] = "DETECTION"
+            self.__unpack_radio_buttons_detectors()
         elif self.func == "classify":
             self.curr_user_info["text"] = "CLASSFICATION"
-            for radiobut in self.classifiers:
-                radiobut.pack_forget()
-                self.open_folder_button.pack_forget()
+            self.__unpack_radio_buttons_detectors()
+            self.__unpack_radio_buttons_classifiers()
+            self.open_folder_button.pack_forget()
         else:
             self.curr_user_info["text"] = "RECONSTRUCTION"
+            self.__unpack_radio_buttons_detectors()
+            self.__unpack_radio_buttons_classifiers()
+            self.__unpack_radio_buttons_merge_strategies()
+            self.open_folder_button.pack_forget()
+            self.open_classified_folder_button.pack_forget()
+            
         self.__unpack_previous_frame()
     
     def update_pb_value(self, curr_value, func):
-        if self.pb_label is None:
+        if func == "Detecting" and self.pb_label is None:
             return
+        if func == "Reconstructing" and self.pb_2_label is None:
+            return
+        if func == "Detecting":
+            pb_max_len = self.pb_max_len
+            pb_label = self.pb_label
+            pb_var = self.pb_var
         else:
-            val = int((curr_value/self.pb_max_len)*100)
-            self.pb_var.set(val)
-            self.pb_label["text"]=f"{func}...{val}%"
+            pb_max_len = self.pb_2_max_len
+            pb_label = self.pb_2_label
+            pb_var = self.pb_var_2
+        val = int((curr_value/pb_max_len)*100)
+        pb_var.set(val)
+        pb_label["text"]=f"{func}...{val}%"
     
     def show_undefined_progress(self, func):
         if self.progress_frame is None:
@@ -277,12 +412,6 @@ class GUI():
         else:
             self.curr_user_info["text"] = "RECONSTRUCTION"
         self.__unpack_previous_frame()
-    
-    def __unpack_previous_frame(self):
-        vars_to_forget = [self.new_user_info, self.run_button, self.open_video_button, self.open_folder_button, *self.classifiers, *self.detectors, *self.merge_strategies]
-        for vari in vars_to_forget:
-            if vari is not None:
-                vari.pack_forget()
         
     def finish_detection_progress(self, user_text, home_button):
         self.pb_var.set(100)
@@ -290,26 +419,24 @@ class GUI():
         if home_button:
             self.button_back_to_start.pack()
     
-    def finish_classification_progress(self, output_path, home_button):
-        self.pb.stop()
+    def finish_classification_progress(self, user_text, home_button):
         self.pb_var.set(100)
-        self.pb_label["text"]=f"Finished classification! You can find your classified patches in\n{output_path}"
+        self.pb.stop()
+        self.pb_label["text"]=f"Finished classification! {user_text}"
         if home_button:
             self.button_back_to_start.pack()
         
         self.visualize_classification_button = ttk.Button(self.progress_frame, text="Visualize Classification Results", command=self.__visualize_classification)
     
-    def finish_reconstruction_progress(self, output_path, home_button):
-        return
-    
-    def __visualize_classification(self):
-        # TODO
-        return
+    def finish_reconstruction_progress(self, user_text):
+        self.pb_var_2.set(100)
+        self.pb_2_label["text"]=f"Finished detection! {user_text}"
+        self.button_back_to_start.pack()
     
     def error_in_progress(self, exception):
         print(exception)
-        #TODO: pop up with error message
-        ...
+        messagebox.showinfo("Error", f"Whoooops, there has been an error:\n{exception}\n\nPlease ensure your video contains detectable faces and you specified the correct directories.")
+        self.__show_start_window()
     
     def set_controller(self, controller):
         self.controller = controller
