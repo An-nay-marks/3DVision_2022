@@ -22,7 +22,7 @@ class NoWDataset(Dataset):
         self.lmk_dir = os.path.join(self.base_dir, 'scans_lmks_onlypp')
 
         with open(os.path.join(self.base_dir, 'imagepathsvalidation.txt')) as f:
-            self.data_lines = [line.strip().removesuffix('jpg') for line in f.readlines()]
+            self.data_lines = [line.strip().replace('.jpg', '') for line in f.readlines()]
 
         assert 0 < train_ratio < 1
         train_size = int(len(self.data_lines) * train_ratio)
