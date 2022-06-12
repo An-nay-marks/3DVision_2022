@@ -46,6 +46,7 @@ class GUI():
         
         # reconstruction window
         self.reconstruct_win = ttk.Frame(self.root)
+        self.reconstruction_start_text = "CLASSIFICATION\nPlease specify what you want to do:"
         
         # all variables that are used (needed to clean screen afterwards)
         self.info_about_the_pipeline = None #TODO
@@ -59,6 +60,7 @@ class GUI():
         self.func = "start"
         self.open_video_button = None
         self.open_folder_button = None
+        self.open_classified_folder_button = None
         self.button_back_to_start = None
         self.new_user_info = None
         self.run_button = None
@@ -100,7 +102,19 @@ class GUI():
     
     def __reconstruct(self):
         """Reconstruct Button pressed"""
-        return
+        self.curr_frame = self.reconstruct_win
+        self.func = "reconstruct"
+        self.curr_user_info = ttk.Label(self.curr_frame, style="TLabel", text = self.reconstruction_start_text)
+        self.curr_user_info.pack()
+        self.open_video_button = ttk.Button(self.curr_frame, text='Select a Raw Video', command=self.__select_video)
+        self.open_video_button.pack()
+        self.open_folder_button = ttk.Button(self.curr_frame, text='Select Patches Folder', command=self.__select_directory)
+        self.open_folder_button.pack()
+        self.open_classified_folder_button = ttk.Button(self.curr_frame, text='Select Classified Patches Folder', command=self.__select_directory)
+        self.open_classified_folder_button.pack
+        self.__init_return_button()
+        self.curr_frame.pack(fill="both", expand=1)
+        self.start_win.pack_forget()
     
     def __init_return_button(self):
         if self.button_back_to_start is not None: # needed to change location of button
@@ -109,9 +123,8 @@ class GUI():
         self.button_back_to_start.pack()
     
     def __show_start_window(self):
-        #TODO: unshow detection and show start window
-        self.start_win.pack(fill="both", expand=1)
         self.__clear_history()
+        self.start_win.pack(fill="both", expand=1)
         self.curr_frame = self.start_win
         self.curr_user_info = self.user_info
         self.func = "start"
@@ -194,17 +207,15 @@ class GUI():
         self.load_patches = False
         self.controller.set_in_path(dir_name)
     
-    def __clear_history(self): # needed to discard changes
-        vars_clear = [self.progress_frame, self.pb, self.pb_label, self.open_video_button, self.button_back_to_start, self.new_user_info, self.run_button, self.curr_user_info, self.open_folder_button]
+    def __clear_history(self): # needed to discard changes, if there is time: TODO: make code object oriented
+        vars_clear = [self.progress_frame, self.pb, self.pb_label, self.open_video_button, self.button_back_to_start, self.new_user_info, self.run_button, self.curr_user_info, self.open_folder_button, self.open_classified_folder_button]
         for var in vars_clear:
             if var is not None:
                 var.pack_forget()
                 var = None
         self.pb_var = IntVar()
         self.pb_max_len = 0
-        self.detection_win.pack_forget()
-        self.classify_win.pack_forget()
-        self.reconstruct_win.pack_forget()
+        self.curr_frame.pack_forget()
         self.curr_frame = self.start_win
         self.curr_user_info = self.user_info
         self.func = "start"
@@ -273,9 +284,9 @@ class GUI():
             if vari is not None:
                 vari.pack_forget()
         
-    def finish_detection_progress(self, output_path, home_button):
+    def finish_detection_progress(self, user_text, home_button):
         self.pb_var.set(100)
-        self.pb_label["text"]=f"Finished detection! You can find your patches in\n{output_path}"
+        self.pb_label["text"]=f"Finished detection! {user_text}"
         if home_button:
             self.button_back_to_start.pack()
     
@@ -287,6 +298,9 @@ class GUI():
             self.button_back_to_start.pack()
         
         self.visualize_classification_button = ttk.Button(self.progress_frame, text="Visualize Classification Results", command=self.__visualize_classification)
+    
+    def finish_reconstruction_progress(self, output_path, home_button):
+        return
     
     def __visualize_classification(self):
         # TODO

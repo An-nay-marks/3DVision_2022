@@ -28,47 +28,22 @@ class OfflinePipeline:
             if self.detector is not None:
                 self.detect()
                 self.source.release()
-
-            if self.classifier is None:
+                if self.classifier is not None:
+                    self.classify(load_patches = False)
+            elif self.classifier is not None:
+                self.classify(load_patches = True)
+            else:
                 return
-
-            self.classify()
-        
+    
         if self.deca is None:
             self.save_classification()
         else:
-            print("Reconstructing faces...")
-            with tqdm(total=len(self.identities)) as pbar:
-                for identity in np.unique(self.identities):
-                    name = identity if self.classifier is None else self.classifier.get_name(identity)
-                    sample_dir = create_id_export_dir(self.target_dir, name)
-                    
-                    id_patches = [self.faces[i] for i in range(len(self.identities)) if self.identities[i] == identity]
-
-                    if self.deca is None:
-                        for patch_idx, patch in enumerate(id_patches):
-                            patch_name = f'patch_{patch_idx + 1}'
-                            patch = resize_face(patch, self.export_size)
-                            cv2.imwrite(os.path.join(sample_dir, f'{patch_name}.jpg'), patch)
-                            pbar.update(1)
-                    else:
-                        reconstructions = self.deca.reconstruct_multiple(id_patches)
-                        if len(reconstructions) == 1:
-                            # no need for patch directory if there is only one reconstruction
-                            self.deca.save_obj(os.path.join(sample_dir, f'{name}.obj'), reconstructions[0])
-                        else:
-                            for patch_idx, reconstruction in enumerate(reconstructions):
-                                patch_name = f'patch_{patch_idx + 1}'
-                                patch_dir = os.path.join(sample_dir, patch_name)
-                                os.makedirs(patch_dir)
-                                self.deca.save_obj(os.path.join(patch_dir, f'{patch_name}.obj'), reconstruction)
-
-                        pbar.update(len(id_patches))
+            self.reconstruct()
     
     def get_source(self):
         return int(self.source.get(cv2.CAP_PROP_FRAME_COUNT))
     
-    def detect(self, notifier = None):
+    def detect(self, notifier = None, save_patches = True):
         print("Detecting faces...")
         num_frames = self.get_source()
         for frame_idx in tqdm(range(num_frames)):
@@ -87,16 +62,17 @@ class OfflinePipeline:
 
                 face_patch = frame[top:bottom + 1, left:right + 1]
 
-                if self.classifier is None:
+                if self.classifier is None and save_patches:
                     sample_dir = create_anonymous_export_dir(self.target_dir, frame_idx)
                     face_patch = resize_face(face_patch, self.export_size)
                     cv2.imwrite(os.path.join(sample_dir, f'patch_{face_idx + 1}.jpg'), face_patch)
                 else:
                     self.faces.append(face_patch)
-
-    def classify(self):
-        print("Loading unclassified patches...")
-        self.faces = load_raw_patches(self.source)
+    
+    def classify(self, load_patches=True):
+        if load_patches:
+            print("Loading unclassified patches...")
+            self.faces = load_raw_patches(self.source)
         print("Classifying faces...")
         self.faces = np.asarray(self.faces, dtype=object)
         self.identities, best_idx = self.classifier.classify_all(self.faces)
@@ -119,3 +95,32 @@ class OfflinePipeline:
                         patch = resize_face(patch, self.export_size)
                         cv2.imwrite(os.path.join(sample_dir, f'{patch_name}.jpg'), patch)
                         pbar.update(1)
+    
+    def reconstruct(self):
+        print("Reconstructing faces...")
+        with tqdm(total=len(self.identities)) as pbar:
+            for identity in np.unique(self.identities):
+                name = identity if self.classifier is None else self.classifier.get_name(identity)
+                sample_dir = create_id_export_dir(self.target_dir, name)
+                
+                id_patches = [self.faces[i] for i in range(len(self.identities)) if self.identities[i] == identity]
+
+                if self.deca is None:
+                    for patch_idx, patch in enumerate(id_patches):
+                        patch_name = f'patch_{patch_idx + 1}'
+                        patch = resize_face(patch, self.export_size)
+                        cv2.imwrite(os.path.join(sample_dir, f'{patch_name}.jpg'), patch)
+                        pbar.update(1)
+                else:
+                    reconstructions = self.deca.reconstruct_multiple(id_patches)
+                    if len(reconstructions) == 1:
+                        # no need for patch directory if there is only one reconstruction
+                        self.deca.save_obj(os.path.join(sample_dir, f'{name}.obj'), reconstructions[0])
+                    else:
+                        for patch_idx, reconstruction in enumerate(reconstructions):
+                            patch_name = f'patch_{patch_idx + 1}'
+                            patch_dir = os.path.join(sample_dir, patch_name)
+                            os.makedirs(patch_dir)
+                            self.deca.save_obj(os.path.join(patch_dir, f'{patch_name}.obj'), reconstruction)
+
+                    pbar.update(len(id_patches))
