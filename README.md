@@ -1,4 +1,4 @@
-[# 3DVision_2022
+# 3D Face Reconstruction from Video
 Project for 3D Vision 2022 at ETH Zurich, reconstruction pipeline for 3D face models from video.
 
 ## Setup
