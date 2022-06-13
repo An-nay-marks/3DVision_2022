@@ -39,6 +39,7 @@ class OfflinePipeline:
             self.reconstruct()
     
     def get_source_detect(self):
+        # interface used by Controller
         return int(self.source.get(cv2.CAP_PROP_FRAME_COUNT))
     
     def detect(self, notifier = None, save_patches = True):
@@ -95,6 +96,7 @@ class OfflinePipeline:
                         pbar.update(1)
     
     def get_source_reconstruct(self):
+        # interface used by Controller
         if self.detector is None and self.classifier is None:
             print("Loading classified patches...")
             self.faces, self.identities = load_classified_patches(self.source)
