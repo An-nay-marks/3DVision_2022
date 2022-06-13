@@ -55,3 +55,74 @@ def load_classified_patches(path):
             patches.append(cv2.imread(file_path))
             identities.append(identity)
     return patches, identities
+
+
+
+### Robust detection on both initial and flipped image. No longer needed but just in case its usefull to somebody:
+
+# copy this part into the offline pipeline:
+"""                valid, frame = source.read()
+                frame_flipped = cv2.flip(frame, 1)
+                frame_number = 0
+
+                #count the total of detected faces in the original and flipped versions. also count matches
+                total_original = 0
+                total_flipped = 0
+                total_matches = 0
+                #find all valid bboxes (ones that match in the original and flipped version)
+                valid_bboxes = []
+                frame_count = 0 #only to keep track of valid_bboxes
+
+                bboxes = detector.detect(frame)
+                bboxes_flipped = detector.detect(frame_flipped)
+
+                #initialize an array that keeps the indices of the matches between the original and flipped versions
+                matches = np.full(bboxes.shape[0], -1)
+
+                if len(matches) == 0: #no face detected in original frame at all, go to next frame
+                    frame_number += 1
+                    valid, frame = source.read()
+                    frame_flipped = cv2.flip(frame, 1)
+                    print('here')
+                    continue
+
+                frame_count += 1 #only to keep track of valid_bboxes
+                valid_bboxes.append(bboxes)
+
+                #array containing all the matches, and the total amount of flipped frames
+                matches, total_flipped = find_matches(bboxes, bboxes_flipped, matches)
+"""
+
+# leave this part in utils
+def find_matches(bboxes, bboxes_flipped, matches):
+    total_flipped = 0
+
+    #loop over all faces detected in the current frame
+    for i in range(0,bboxes.shape[0]):
+            #keep track of the minimum difference seen so far between the 'left' 
+            #and 'right' values of the bounding box in the original vs. flipped version
+            min_left_dif = 10000.0
+            min_right_dif = 10000.0
+
+            #for each face detected in the current frame go through all faces detected in the flipped version
+            for j in range(0, bboxes_flipped.shape[0]):
+                
+                #we go through all faces in the flipped version here.
+                if i == 0:
+                    total_flipped += 1
+
+                left_dif =  abs(bboxes[i][1] - bboxes_flipped[j][1])
+                right_dif = abs(bboxes[i][3] - bboxes_flipped[j][3])
+
+                #most likely the same face if the difference is lower than a small threshold
+                #also make sure it's the smallest difference seen so far
+
+                if left_dif < min(10.0, min_left_dif) and right_dif < min(20.0, min_right_dif):
+                    matches[i] = j
+                    min_left_dif = left_dif
+                    min_right_dif = right_dif
+            
+            #print('face ', i, ' in the original frame matched with face ', matches[i], ' in the flipped frame')
+    
+    #print(matches)
+    return matches, total_flipped
