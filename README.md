@@ -13,18 +13,20 @@ To install PyTorch3D, follow [INSTALL.md](https://github.com/facebookresearch/py
 
 ### Model checkpoints
 Checkpoints for SCRFD, YOLOv5Face and ArcFace are provided in this repository.
-Follow the instructions in DECA's [README.md](https://github.com/YadiraF/DECA/blob/master/README.md) and copy the files 
+Follow the instructions in [README](https://github.com/YadiraF/DECA/blob/master/README.md) under 
+Usage > Preppare Data and copy the FLAME, DECA and Albedo files 
 into [data/model_files](data/model_files).
 
 ### NoW  
-In order to run the NoW evaluation, download the data set from their [website](https://now.is.tue.mpg.de/). Then,
-following the instructions in the [README](https://github.com/soubhiksanyal/now_evaluation/blob/main/README.md)
+[optional]
+In order to run the NoW evaluation, download the data set from its [website](https://now.is.tue.mpg.de/). Then,
+follow the instructions in the [README](https://github.com/soubhiksanyal/now_evaluation/blob/main/README.md)
 to install additional dependencies.
 
 ## Usage
 ### Pipeline
-The pipeline is divided into three main components: detection, classification and reconstruction. Each of these builds
-on the previous and will therefore also run all of the stages leading up to it. They can all be started 
+The pipeline is divided into three main components: detection, classification and reconstruction. Each of these build
+on the previous and will therefore also run all the stages leading up to it. They can be started 
 from [main.py](main.py) or from their specific files as seen below.
 ```
 python3 main.py -f {detection, classification, reconstruction} -s SOURCE [-r NAME] [--online]
@@ -53,20 +55,20 @@ Binary option to specify whether to run the online or offline pipeline. The onli
 classification and show the video while processing detected faces.
 
 #### --detector / -d
-Specify the model to use for the detection stage.
+Specify the model to use for the detection stage. Defaults to SCRFD.
 
 #### --patch-size
-Specify the export resolution of detected faces.
+Specify the export resolution of detected faces. Patches will not be resized if unspecified.
 
 #### --classifier / -c
-Specify the model / clustering algorithm used in the classification stage.
+Specify the model / clustering algorithm used in the classification stage. Defaults to agglomerative clustering.
 
 #### --load-raw / -lr
 Specify a path to previously exported detection results. This allows skipping the first stage.
 
 #### --merge
 Specify the multi-face merging strategy used during reconstruction to obtain results from multiple 
-images of the same person.
+images of the same person. Defaults to single reconstruction per image (no merging).
 
 #### --load-classified / -lc
 Specify a path to previously exported classification results. This allows skipping the first two stages.
