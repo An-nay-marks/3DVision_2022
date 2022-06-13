@@ -36,13 +36,13 @@ def get_augmentations():
         return exposure.adjust_gamma(image, g)
 
     downscales = [0.1, 0.25, 0.05]
-    # flips = [lambda x:x, lambda x:x[:, ::-1, :]]  # x, -y, color, horizontal flip
-    # noise = [lambda x:x, lambda x:random_noise(x)]
-    # swirls = [lambda x:x, lambda x: swirl(x, strength = 2, radius = 100, rotation=0.2)] # not too much of a swirl
-    # affine_trans = [lambda x:x, lambda x: aff_trans(x)]
+    flips = [lambda x:x, lambda x:x[:, ::-1, :]]  # x, -y, color, horizontal flip
+    noise = [lambda x:x, lambda x:random_noise(x)]
+    swirls = [lambda x:x, lambda x: swirl(x, strength = 2, radius = 100, rotation=0.2)] # not too much of a swirl
+    affine_trans = [lambda x:x, lambda x: aff_trans(x)]
     exposures = [lambda x:x, lambda x: exp_trans(x, 0.5),
                  lambda x: exp_trans(x, 0.8), lambda x: exp_trans(x, 1.5)]
-    return list(itertools.product(downscales, exposures))
+    return list(itertools.product(downscales, noise, flips, swirls, affine_trans, exposures))
 
 
 def get_data_list():
@@ -55,13 +55,13 @@ def get_data_list():
 
 def process(idx):
     img_name, img = data[idx]
-    for i, (downscale, exp) in enumerate(combined_augmentation):
+    for i, (downscale, noise, flip, swir, aff, exp) in enumerate(combined_augmentation):
         downscaled = rescale(img, scale=(downscale, downscale, 1))  # x, y, rgb (don't change rgb)
-        # noisy = noise(downscaled)
-        # flipped = flip(downscaled)
-        # swirled = swir(flipped)
-        # transformed = aff(swirled)
-        exposed = exp(downscaled)
+        noisy = noise(downscaled)
+        flipped = flip(noisy)
+        swirled = swir(flipped)
+        transformed = aff(swirled)
+        exposed = exp(transformed)
         resized = resize(exposed, output_shape=img.shape)
         target_img = img_as_ubyte(resized)  # keep uint8 instead of float
 
