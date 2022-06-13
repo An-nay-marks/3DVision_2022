@@ -26,7 +26,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 def get_default_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--source', help='Path to input file.')
-    parser.add_argument('-r', '--name',
+    parser.add_argument('-r', '--run-name',
                         help='All data outputs of the run will be saved in "out/<run_name>" '
                              'and all logging to "logs/<run_name>".')
     parser.add_argument('--online', action='store_true')

@@ -1,11 +1,12 @@
-from textwrap import wrap
 from tkinter import *
-from tkinter import ttk
 from tkinter import filedialog as fd
 from tkinter import messagebox
+from tkinter import ttk
+
 from gui_controller import Controller
 
-class GUI():
+
+class GUI:
     def __init__(self):
         self.controller = None
         app_name = "Facial Reconstruction from Videos"
