@@ -12,6 +12,7 @@ def get_detection_parser():
                         help='Patch size output (width, height), if specific size is required.')
     return parser
 
+
 def parse_args():
     parser = get_detection_parser()
     return parser.parse_known_args()[0]

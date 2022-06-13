@@ -26,7 +26,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 def get_default_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--source', help='Path to input file.')
-    parser.add_argument('-r', '--name',
+    parser.add_argument('-r', '--run-name',
                         help='All data outputs of the run will be saved in "out/<run_name>" '
                              'and all logging to "logs/<run_name>".')
     parser.add_argument('--online', action='store_true')
@@ -74,14 +74,17 @@ def init_dir(dir_path):
 def read_lines_as_list(textfile):
     with open(textfile) as file:
         lines = file.readlines()
-        lines = [line.rstrip() for line in lines]
+        lines = [line.strip() for line in lines]
     return lines
 
 
-def check_dataset(): 
-    for path in ["data/NoW_Dataset", "data/NoW_Dataset/final_release_version", "data/NoW_Dataset/final_release_version/scans", "data/NoW_Dataset/final_release_version/iphone_pictures", "data/NoW_Dataset/final_release_version/detected_face", "data/NoW_Dataset/final_release_version/imagepathsvalidation.txt"]:
-        if not os.path.exists(path):
-            raise FileNotFoundError("Please download the NoW evaluation scans and corresponding image, detected face data as well as imagepathsvalidation and put it into data/NoW_Dataset/final_release_version")
+def check_now_dataset():
+    base_dir = os.path.join(ROOT_DIR, 'data', 'NoW_Dataset', 'final_release_version')
+    for path in ['scans', 'iphone_pictures', 'detected_face', 'imagepathsvalidation.txt']:
+        if not os.path.exists(os.path.join(base_dir, path)):
+            raise FileNotFoundError("Please download the NoW evaluation scans and corresponding image, "
+                                    "detected face data as well as imagepathsvalidation and put it into "
+                                    "data/NoW_Dataset/final_release_version")
 
 
 def pad_with_zeros(x, string_length):

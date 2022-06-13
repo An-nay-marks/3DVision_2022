@@ -1,5 +1,6 @@
 import argparse
 import contextlib
+import os.path
 import sys
 import tempfile
 
@@ -8,7 +9,7 @@ from psbody.mesh import Mesh
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from utils_3DV import MERGE_STRATEGIES
+from utils_3DV import MERGE_STRATEGIES, ROOT_DIR
 from reconstruct import initialize_deca
 from reconstruction.now import SubjectBasedNoWDataSet
 
@@ -24,12 +25,12 @@ def parse_args():
 
 
 def main(args):
-    data_set = SubjectBasedNoWDataSet()
+    data_set = SubjectBasedNoWDataSet('imagepaths_augmented.txt')
     data_loader = DataLoader(data_set, shuffle=False)
     deca = initialize_deca(args.merge)
 
     with contextlib.redirect_stderr(tempfile.TemporaryFile('w+')):
-        all_distances = []
+        all_means = []
 
         for subject in tqdm(data_loader, file=sys.stdout):
             images, gt_mesh_path, gt_lmk_path = subject
@@ -44,11 +45,12 @@ def main(args):
 
                 pred_mesh = Mesh(basename='img', v=verts[0], f=faces)
                 landmark_dist = compute_error_metric(gt_mesh_path[0], gt_lmk_path[0], pred_mesh, landmark_7[0])
-                all_distances.extend(landmark_dist)
+                all_means.append(np.mean(landmark_dist))
 
-        print(f'median: {np.median(all_distances)}')
-        print(f'mean:   {np.median(all_distances)}')
-        print(f'std:    {np.std(all_distances)}')
+        np.save(os.path.join(ROOT_DIR, 'data', 'now_dist.npy'), all_means)
+        print(f'median: {np.median(all_means)}')
+        print(f'mean:   {np.mean(all_means)}')
+        print(f'std:    {np.std(all_means)}')
 
 
 if __name__ == '__main__':

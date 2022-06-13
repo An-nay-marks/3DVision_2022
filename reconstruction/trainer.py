@@ -38,6 +38,7 @@ class Trainer:
         self.evaluation_interval = evaluation_interval
         self.checkpoint_interval = checkpoint_interval
 
+        data_file = 'imagepaths_augmented.txt'
         dist_path = os.path.join(ROOT_DIR, 'data', 'now_dist.npy')
 
         if os.path.exists(dist_path):
@@ -47,10 +48,10 @@ class Trainer:
             self.deca = initialize_deca('single')
             dist_path = None
 
-        train_data = NoWDataset('train', self.train_ratio, dist_path=dist_path)
+        train_data = NoWDataset(data_file, 'train', self.train_ratio, dist_path=dist_path)
         self.train_loader = DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
 
-        test_data = NoWDataset('test', self.train_ratio, dist_path=dist_path)
+        test_data = NoWDataset(data_file, 'test', self.train_ratio, dist_path=dist_path)
         self.test_loader = DataLoader(test_data, batch_size=self.batch_size, shuffle=True)
 
         if checkpoint_path is not None:
@@ -68,7 +69,6 @@ class Trainer:
         }
 
     def train(self, num_epochs):
-        os.environ['PYOPENGL_PLATFORM'] = 'osmesa'
         checkpoint_dir = os.path.join(CHECKPOINTS_DIR, self.run_name)
         os.makedirs(checkpoint_dir, exist_ok=True)
 
@@ -123,11 +123,11 @@ class Trainer:
                 pred_mesh = Mesh(basename=f'img_{k}', v=verts[k], f=faces)
                 pred_lmk = landmark_7[k]
                 landmark_dist = compute_error_metric(gt_mesh_paths[k], gt_lmk_paths[k], pred_mesh, pred_lmk)
-                distances[k] = np.sum(landmark_dist)
+                distances[k] = np.mean(landmark_dist)
         else:
-            distances = torch.Tensor(batch[1])
+            distances = batch[1]
 
-        distances = distances.to(DEVICE)
+        distances = distances.to(DEVICE).float()
         return self.loss_function(scores, distances)
 
     def _train_step(self):

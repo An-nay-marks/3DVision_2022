@@ -46,8 +46,6 @@ class OfflinePipeline:
         print("Detecting faces...")
         num_frames = self.get_source_detect()
         for frame_idx in tqdm(range(num_frames)):
-            #if frame_idx < 10250 or frame_idx > 10500:
-            #    continue
             if notifier is not None:
                 notifier.status(frame_idx)
             valid, frame = self.source.read()
@@ -77,7 +75,6 @@ class OfflinePipeline:
         self.identities, best_idx = self.classifier.classify_all(self.faces)
         self.faces = self.faces[best_idx]
         self.identities = self.identities[best_idx]
-
 
     def save_classification(self):
         print("Exporting patches...")
