@@ -39,8 +39,9 @@ class GUI():
         s.configure("InfoProject.TLabel", background=background_color, foreground="white", font=font_info_about_project_text)
         # start window
         self.start_win = ttk.Frame(master=self.root)
-        self.user_info = ttk.Label(self.start_win, text="Welcome to the world of facial reconstruction from videos.\nWhat would you like to do with your video?", style="TLabel", padding=20, anchor="c")
-        self.user_info.pack(padx=30, pady = 10, anchor="n", side=TOP)
+        self.user_info = "Welcome to the world of facial reconstruction from videos.\nWhat would you like to do with your video?"
+        self.curr_user_info =  ttk.Label(self.root, text=self.user_info, style="TLabel", padding=20, anchor="c")
+        self.curr_user_info.pack(ipadx=30, ipady = 10, anchor="n", side=TOP,fill="x")
         self.button_detect = ttk.Button(self.start_win, text="Detect Faces", command=self.__detect)
         self.button_classify = ttk.Button(self.start_win, text="Detect and Classify Faces", command=self.__classify)
         self.button_reconstruct = ttk.Button(self.start_win, text="Detect, Classify and Reconstruct Faces", command=self.__reconstruct)
@@ -77,7 +78,6 @@ class GUI():
         self.pb_2_label = None
         self.pb_2_max_len = 0
         self.curr_frame = self.start_win
-        self.curr_user_info = self.user_info
         self.func = "start"
         self.open_video_button = None
         self.open_folder_button = None
@@ -104,8 +104,7 @@ class GUI():
         """Detection Button pressed"""
         self.curr_frame = self.detection_win
         self.func = "detect"
-        self.curr_user_info = ttk.Label(self.curr_frame, text = self.detection_start_text, justify = "center", wraplength=400)
-        self.curr_user_info.pack(padx=30, pady = 10)
+        self.curr_user_info["text"] = self.detection_start_text
         self.__init_return_button()
         self.video_frame = ttk.Label(self.curr_frame)
         self.open_video_button = ttk.Button(self.video_frame, text='Select Raw Video', command=self.__select_video)
@@ -118,8 +117,7 @@ class GUI():
         """Classification Button pressed"""
         self.curr_frame = self.classify_win
         self.func = "classify"
-        self.curr_user_info = ttk.Label(self.curr_frame, text = self.classification_start_text, justify = "center", wraplength=400)
-        self.curr_user_info.pack(padx=30, pady = 10)
+        self.curr_user_info["text"] = self.classification_start_text
         self.__init_return_button()
         self.video_frame = ttk.Label(self.curr_frame)
         self.open_video_button = ttk.Button(self.video_frame, text='Select Raw Video', command=self.__select_video)
@@ -134,8 +132,7 @@ class GUI():
         """Reconstruct Button pressed"""
         self.curr_frame = self.reconstruct_win
         self.func = "reconstruct"
-        self.curr_user_info = ttk.Label(self.curr_frame, text = self.reconstruction_start_text, justify = "center", wraplength=400)
-        self.curr_user_info.pack(padx=30, pady = 10)
+        self.curr_user_info["text"] = self.reconstruction_start_text
         self.__init_return_button()
         self.video_frame = ttk.Label(self.curr_frame)
         self.open_video_button = ttk.Button(self.video_frame, text='Select Raw Video', command=self.__select_video)
@@ -158,7 +155,7 @@ class GUI():
         self.__clear_history()
         self.start_win.pack(fill="both", expand=1)
         self.curr_frame = self.start_win
-        self.curr_user_info = self.user_info
+        self.curr_user_info["text"] = self.user_info
         
         self.func = "start"
 
@@ -325,7 +322,7 @@ class GUI():
         self.pb_2_max_len = 0
         self.curr_frame.pack_forget()
         self.curr_frame = self.start_win
-        self.curr_user_info = self.user_info
+        self.curr_user_info["text"] = self.user_info
         self.func = "start"
         self.detector_idx = StringVar()
         self.merge_strategy_idx = StringVar()
