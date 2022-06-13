@@ -4,20 +4,21 @@ from torch import nn
 
 class OptimizerNN(nn.Sequential):
     def __init__(self, checkpoint_path=None):
-        # self.canny = ... # TODO
-
         layers = []
-        num_conv_layers = 10
-        curr_channel_size = 3  # 3 for image +1 for Canny
-        kernel_size = 5
+        kernel_size = 3
 
-        for i in range(num_conv_layers):
-            next_channel_size = curr_channel_size + 3
-            layers.append(ConvBatchNormRELU(curr_channel_size, next_channel_size, kernel_size))
-            curr_channel_size = next_channel_size
+        prev_channel_size = 3
+        curr_channel_size = 64
 
-        image_dim = 224 - num_conv_layers * (kernel_size - 1)
-        super().__init__(*layers, BinaryLinearOutput(curr_channel_size * image_dim * image_dim))
+        for _ in range(4):
+            layers.append(ConvBatchNormRELU(prev_channel_size, curr_channel_size, kernel_size))
+            layers.append(ConvBatchNormRELU(curr_channel_size, curr_channel_size, kernel_size))
+            layers.append(ConvBatchNormRELU(curr_channel_size, curr_channel_size, kernel_size))
+            prev_channel_size = curr_channel_size
+            curr_channel_size *= 2
+
+        image_dim = 224 - 12 * (kernel_size - 1)
+        super().__init__(*layers, BinaryLinearOutput(prev_channel_size * image_dim * image_dim))
 
         if checkpoint_path:
             checkpoint = torch.load(checkpoint_path)
@@ -49,20 +50,3 @@ class BinaryLinearOutput(nn.Sequential):
             nn.Linear(dim, 1),
             nn.ReLU()
         )
-
-
-class SobelLayer(nn.Module):
-    """for detecting Edges"""
-
-    def __init__(self):
-        super().__init__()
-        # self.kernel_vertical = FloatTensor([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
-        # self.kernel_horizontal = FloatTensor([[1, 0, -1], [2,0 , -2], [1, 0, -1]])
-        # TODO: maybe just clone https://github.com/DCurro/CannyEdgePytorch
-
-    def forward(self, x):
-        # vertical = F.conv3d(x, self.kernel_vertical, stride = 1, padding=1) # keep dimensionality
-        # horizontal = 
-        ...  # TODO
-
-# TODO: maybe include blob detector, facial landmark detector

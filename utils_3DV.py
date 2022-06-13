@@ -42,7 +42,7 @@ def initialize_video_provider(source):
 
 
 def get_default_objects(args):
-    run_name = args.name
+    run_name = args.run_name
     if run_name is None:
         run_name = f'{get_current_datetime_as_str()}'
 

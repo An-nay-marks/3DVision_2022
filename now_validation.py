@@ -25,7 +25,7 @@ def parse_args():
 
 
 def main(args):
-    data_set = SubjectBasedNoWDataSet('imagepaths_augmented.txt')
+    data_set = SubjectBasedNoWDataSet('imagepathsvalidation.txt')
     data_loader = DataLoader(data_set, shuffle=False)
     deca = initialize_deca(args.merge)
 

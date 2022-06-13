@@ -88,9 +88,12 @@ Data augmentation on the NoW data set can be performed using
 ```
 python3 augmentation.py
 ```
+After training, retrieve the relevant model checkpoint from [checkpoints](checkpoints) and copy it into
+[data/model_files](data/model_files) as 'conv_predictor.pt'.
 
 ### GUI
 The graphical user interface can be launched with
 ```
 python3 gui.py
 ```
+The GUI has only been confirmed to work on Windows.

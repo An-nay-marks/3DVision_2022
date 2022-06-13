@@ -15,15 +15,17 @@ def parse_args(online):
 
 
 def initialize_deca(merge_fn):
-    deca_file = f'{ROOT_DIR}/data/model_files/deca_model.tar'
-    flame_file = f'{ROOT_DIR}/data/model_files/generic_model.pkl'
-    albedo_file = f'{ROOT_DIR}/data/model_files/FLAME_albedo_from_BFM.npz'
+    model_file_dir = os.path.join(ROOT_DIR, 'data', 'model_files')
+    deca_file = os.path.join(model_file_dir, 'deca_model.tar')
+    flame_file = os.path.join(model_file_dir, 'generic_model.pkl')
+    albedo_file = os.path.join(model_file_dir, 'FLAME_albedo_from_BFM.npz')
+    optimizer_file = os.path.join(model_file_dir, 'conv_predictor.pt')
 
     if not os.path.exists(albedo_file):
         print('WARNING: Albedo file not found. Reconstruction will be performed without albedo.', file=sys.stderr)
         albedo_file = None
 
-    return DECAFaceReconstruction(deca_file, flame_file, albedo_file, merge_fn)
+    return DECAFaceReconstruction(deca_file, flame_file, albedo_file, merge_fn, optimizer_file)
 
 
 def run_reconstruction(source, run_name, online, specific_args):

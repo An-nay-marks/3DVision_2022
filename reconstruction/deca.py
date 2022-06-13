@@ -66,12 +66,18 @@ class DECAFaceReconstruction(DECA):
             else:  # predictive
                 images = torch.cat(images)
                 scores = self.model(images)
-                # TODO weighted average of all or only shape?
+                weights = torch.softmax(scores).cpu().numpy()
+                code_dict = self._average_all_params(encodings, weights)
+                reconstruction, _ = self.decode(code_dict)
+                reconstructions.append(reconstruction)
 
         return reconstructions
 
     @staticmethod
-    def _get_parameter_mean(encodings, key):
+    def _get_parameter_mean(encodings, key, weights=None):
+        if weights is None:
+            weights = torch.ones(len(encodings)) / len(encodings)
+
         all_params = torch.cat([enc[key] for enc in encodings], dim=0)
         return torch.mean(all_params, dim=0)[None, :]
 
@@ -86,13 +92,10 @@ class DECAFaceReconstruction(DECA):
         code_dict = dict()
 
         # TODO use weights
-        if weights is None:
-            weights = np.ones(len(encodings)) / len(encodings)
-
         exceptions = ['tex', 'images']
         param_keys = encodings[0].keys()
         for key in [k for k in param_keys if k not in exceptions]:
-            code_dict[key] = DECAFaceReconstruction._get_parameter_mean(encodings, key)
+            code_dict[key] = DECAFaceReconstruction._get_parameter_mean(encodings, key, weights)
 
         # use image of most representative sample
         nearest_idx = DECAFaceReconstruction._get_representative_sample(encodings, 'shape')
