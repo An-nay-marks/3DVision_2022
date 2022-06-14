@@ -93,11 +93,11 @@ In order to be able to train the predictive quality model, the [now_dist.npy](da
 It includes DECA's NoW scores for all images in the data set + augmentation. If the data changes,
 all requirements for NoW (see above) need to be present to regenerate it. Training can be started with
 ```
-python3 optimize_deca.py
+python3 optimize_deca.py [--epochs NUM_EPOCHS] [--checkpoint CHECKPOINT_PATH]
 ```
 This can be done without the [now_dist.npy](data/now_dist.npy) file, but will be slow. To regenerate the file, run
 ```
-python3 now_validation.py
+python3 now_validation.py [--merge MERGE_STRATEGY]
 ```
 Data augmentation on the NoW data set can be performed using
 ```

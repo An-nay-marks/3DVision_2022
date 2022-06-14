@@ -1,15 +1,14 @@
-from cv2 import threshold
 import torch
+import reconstruction.canny as canny
+
 from torch import nn
 from utils_3DV import DEVICE
-import reconstruction.canny as canny
 
 
 class OptimizerCanny(nn.Module):
-    def __init__(self, checkpoint_path = None):
-        super(OptimizerCanny, self).__init__()
+    def __init__(self, checkpoint_path=None):
+        super().__init__()
         self.canny = canny.Net(threshold=3.0)
-        self.canny.eval()
         self.tail = OptimizerNN(input_channels=6)
 
         if checkpoint_path:
@@ -24,23 +23,23 @@ class OptimizerCanny(nn.Module):
         
 
 class OptimizerNN(nn.Sequential):
-    def __init__(self, checkpoint_path=None, input_channels = 3):
+    def __init__(self, checkpoint_path=None, input_channels=3):
         layers = nn.ModuleList()
         kernel_size = 3
+        num_blocks = 3
 
         prev_channel_size = input_channels
-        
         curr_channel_size = 64
 
-        for _ in range(3):
+        for _ in range(num_blocks):
             layers.append(ConvBatchNormRELU(prev_channel_size, curr_channel_size, kernel_size))
             layers.append(ConvBatchNormRELU(curr_channel_size, curr_channel_size, kernel_size))
             layers.append(ConvBatchNormRELU(curr_channel_size, curr_channel_size, kernel_size))
             prev_channel_size = curr_channel_size
             curr_channel_size *= 2
 
-        image_dim = 224 - 9 * (kernel_size - 1)
-        super().__init__(*layers, BinaryLinearOutput(prev_channel_size * image_dim * image_dim))
+        out_dim = 224 - num_blocks * 3 * (kernel_size - 1)
+        super().__init__(*layers, BinaryLinearOutput(prev_channel_size * out_dim * out_dim))
 
         if checkpoint_path:
             checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
@@ -69,6 +68,5 @@ class BinaryLinearOutput(nn.Sequential):
     def __init__(self, dim):
         super().__init__(
             nn.Flatten(),
-            nn.Linear(dim, 1),
-            nn.Tanh()
+            nn.Linear(dim, 1)
         )

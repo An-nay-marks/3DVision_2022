@@ -11,7 +11,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--checkpoint', type=str, default=None)
-    parser.add_argument('--model', type=str, default= "standard", choices=["standard", "canny"])
+    parser.add_argument('--model', type=str, default='standard', choices=['standard', 'canny'])
     return parser.parse_args()
 
 
