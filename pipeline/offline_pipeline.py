@@ -22,11 +22,14 @@ class OfflinePipeline:
     def run(self):
         if not init_dir(self.target_dir):
             return
+
         if self.detector is not None:
             self.detect()
             self.source.release()
             if self.classifier is not None:
-                self.classify(load_patches = False)
+                self.classify(load_patches=False)
+            else:
+                return
         elif self.classifier is not None:
             self.classify(load_patches = True)
         else:
