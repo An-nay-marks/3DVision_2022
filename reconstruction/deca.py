@@ -66,7 +66,7 @@ class DECAFaceReconstruction(DECA):
             else:  # predictive
                 images = torch.cat(images).to(DEVICE)
                 scores = self.model(images).squeeze(1)
-                weights = torch.softmax(scores, dim=0)
+                weights = torch.softmax(-scores / 1000, dim=0)
                 code_dict = self._combine_all_params(encodings, weights)
                 reconstruction, _ = self.decode(code_dict)
                 reconstructions.append(reconstruction)
