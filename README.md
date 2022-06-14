@@ -54,7 +54,7 @@ python3 detect.py [-d {scrfd, yolo5}] [--patch-size int int]
 python3 classify.py [-c {agglomerative, dbscan, mean-shift, vgg}] [-lr PATH]
 ```
 ```
-python3 reconstruct.py [--merge {single, mean, mean_shape, 'predictive'}] [-lc PATH]
+python3 reconstruct.py [--merge {single, mean, mean_shape, 'cnn'}] [-lc PATH]
 ```
 As each stage runs all previous stages, arguments are cumulative.
 
@@ -89,7 +89,7 @@ images of the same person. Defaults to single reconstruction per image (no mergi
 Specify a path to previously exported classification results. This allows skipping the first two stages.
 
 ### Model training
-In order to be able to train the predictive quality model, the [now_dist.npy](data/now_dist.npy) file can be used. 
+In order to be able to train the predictive quality model (CNN), the [now_dist.npy](data/now_dist.npy) file can be used. 
 It includes DECA's NoW scores for all images in the data set + augmentation. If the data changes,
 all requirements for NoW (see above) need to be present to regenerate it. Training can be started with
 ```
