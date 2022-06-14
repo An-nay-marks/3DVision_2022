@@ -25,19 +25,23 @@ class NoWDataset(Dataset):
         with open(os.path.join(self.base_dir, data_file)) as f:
             self.data_lines = [line.strip().replace('.jpg', '') for line in f.readlines()]
 
+        has_distances = dist_path is not None
+        if has_distances:
+            self.distances = np.load(dist_path, allow_pickle=True)
+            self.distances -= np.mean(self.distances)
+            self.distances /= np.std(self.distances)
+            assert len(self.data_lines) == len(self.distances)
+        else:
+            self.distances = None
+
         assert 0 < train_ratio < 1
         train_size = int(len(self.data_lines) * train_ratio)
         if split == 'train':
             self.data_lines = self.data_lines[:train_size]
-            self.distances = np.load(dist_path, allow_pickle=True)[:train_size] if dist_path else None
+            self.distances = self.distances[:train_size] if has_distances else None
         elif split == 'test':
             self.data_lines = self.data_lines[train_size:]
-            self.distances = np.load(dist_path, allow_pickle=True)[train_size:] if dist_path else None
-        else:
-            self.distances = np.load(dist_path, allow_pickle=True) if dist_path else None
-
-        if self.distances is not None:
-            assert len(self.data_lines) == len(self.distances)
+            self.distances = self.distances[train_size:] if has_distances else None
 
     def __len__(self):
         return len(self.data_lines)

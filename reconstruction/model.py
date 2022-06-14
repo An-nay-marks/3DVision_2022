@@ -70,5 +70,5 @@ class BinaryLinearOutput(nn.Sequential):
         super().__init__(
             nn.Flatten(),
             nn.Linear(dim, 1),
-            nn.ReLU()
+            nn.Tanh()
         )

@@ -10,6 +10,15 @@ conda activate 3DVision
 pip install torch==1.10.0+cu111 torchvision==0.11.0+cu111 torchaudio==0.10.0 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 To install PyTorch3D, follow [INSTALL.md](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md).
+If you encounter an import error in the keras-vggface package, you will need to change the import statement from
+```python
+from keras.engine.topology import get_source_inputs
+```
+to 
+```python
+from keras.utils.layer_utils import get_source_inputs
+```
+Unfortunately, this is a problem with the module and cannot be fixed by us.
 
 ### Submodules
 Please clone all submodules.

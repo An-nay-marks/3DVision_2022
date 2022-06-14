@@ -18,11 +18,14 @@ def parse_args():
 def main(args):
     if args.model == "standard":
         model = OptimizerNN()
-        checkpoint_path = os.path.join(ROOT_DIR, 'data', 'model_files', 'conv_predictor.pt')
+        save_path = os.path.join(ROOT_DIR, 'data', 'model_files', 'conv_predictor.pt')
     elif args.model == "canny":
         model = OptimizerCanny()
-        checkpoint_path = os.path.join(ROOT_DIR, 'data', 'model_files', 'canny_predictor.pt')
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+        save_path = os.path.join(ROOT_DIR, 'data', 'model_files', 'canny_predictor.pt')
+    else:
+        raise NotImplementedError
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0000001)
     loss_function = torch.nn.MSELoss()
     trainer = Trainer(model, optimizer, loss_function)
 
@@ -30,7 +33,8 @@ def main(args):
         trainer.load_checkpoint(args.checkpoint)
 
     trainer.train(num_epochs=args.epochs)
-    trainer.save_checkpoint(checkpoint_path)
+    trainer.save_checkpoint(save_path)
+    print(f'Final checkpoint saved at {save_path}')
 
 
 if __name__ == "__main__":

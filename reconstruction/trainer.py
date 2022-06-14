@@ -125,7 +125,7 @@ class Trainer:
         else:
             distances = batch[1]
 
-        distances = distances.to(DEVICE).float() * 1000
+        distances = distances.to(DEVICE).float()
         return self.loss_function(scores, distances)
 
     def _train_step(self):
@@ -166,4 +166,4 @@ class Trainer:
         self.epoch = checkpoint['epoch'] + 1
         self.model.load_state_dict(checkpoint['model'])
         self.optimizer.load_state_dict(checkpoint['optimizer'])
-        print(f'Checkpoint loaded, resuming from epoch {self.epoch+1}.')
+        print(f'Checkpoint loaded, resuming from epoch {self.epoch}.')
