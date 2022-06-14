@@ -1,29 +1,30 @@
 import torch
 from torch import nn
+from utils_3DV import DEVICE
 
 
 class OptimizerNN(nn.Sequential):
     def __init__(self, checkpoint_path=None):
-        layers = []
+        layers = nn.ModuleList()
         kernel_size = 3
 
         prev_channel_size = 3
         curr_channel_size = 64
 
-        for _ in range(4):
+        for _ in range(3):
             layers.append(ConvBatchNormRELU(prev_channel_size, curr_channel_size, kernel_size))
             layers.append(ConvBatchNormRELU(curr_channel_size, curr_channel_size, kernel_size))
             layers.append(ConvBatchNormRELU(curr_channel_size, curr_channel_size, kernel_size))
             prev_channel_size = curr_channel_size
             curr_channel_size *= 2
 
-        image_dim = 224 - 12 * (kernel_size - 1)
+        image_dim = 224 - 9 * (kernel_size - 1)
         super().__init__(*layers, BinaryLinearOutput(prev_channel_size * image_dim * image_dim))
 
         if checkpoint_path:
-            checkpoint = torch.load(checkpoint_path)
+            checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
             self.epoch = checkpoint['epoch']
-            self.model.load_state_dict(checkpoint['model'])
+            self.load_state_dict(checkpoint['model'])
 
 
 class ConvBatchNormRELU(nn.Sequential):

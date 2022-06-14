@@ -1,4 +1,5 @@
 import contextlib
+import sys
 import tempfile
 
 import numpy as np
@@ -10,8 +11,8 @@ from utils_3DV import *
 
 
 class Trainer:
-    def __init__(self, model, optimizer, loss_function, checkpoint_path=None, name=None, split=0.8, batch_size=8,
-                 evaluation_interval=2, checkpoint_interval=5):
+    def __init__(self, model, optimizer, loss_function, name=None, split=0.8, batch_size=8,
+                 evaluation_interval=2, checkpoint_interval=1):
         """
         class for model trainers.
         Args:
@@ -54,9 +55,6 @@ class Trainer:
         test_data = NoWDataset(data_file, 'test', self.train_ratio, dist_path=dist_path)
         self.test_loader = DataLoader(test_data, batch_size=self.batch_size, shuffle=True)
 
-        if checkpoint_path is not None:
-            self._load_checkpoint(checkpoint_path)
-
     def _get_hyperparams(self):
         """
         Returns dict of all hyperparameters for convenience
@@ -79,7 +77,7 @@ class Trainer:
 
         self.model.train()
 
-        for self.epoch in range(num_epochs):
+        for self.epoch in range(self.epoch, num_epochs):
             print(f'Epoch {self.epoch+1}/{num_epochs}')
             with contextlib.redirect_stderr(tempfile.TemporaryFile(mode='w+')):
                 train_loss = self._train_step()
@@ -91,7 +89,7 @@ class Trainer:
 
                 if self.epoch % self.checkpoint_interval == 0:
                     path = os.path.join(checkpoint_dir, f'cp_ep-{self.epoch:05}.pt')
-                    self._save_checkpoint(path)
+                    self.save_checkpoint(path)
                     print(f'Checkpoint saved at {path}')
 
                 print('')
@@ -127,7 +125,7 @@ class Trainer:
         else:
             distances = batch[1]
 
-        distances = distances.to(DEVICE).float()
+        distances = distances.to(DEVICE).float() * 1000
         return self.loss_function(scores, distances)
 
     def _train_step(self):
@@ -155,17 +153,17 @@ class Trainer:
 
         return test_loss / len(self.test_loader)
 
-    def _save_checkpoint(self, checkpoint_path):
+    def save_checkpoint(self, checkpoint_path):
         torch.save({
             'epoch': self.epoch,
             'model': self.model.state_dict(),
             'optimizer': self.optimizer.state_dict()
         }, checkpoint_path)
 
-    def _load_checkpoint(self, checkpoint_path):
+    def load_checkpoint(self, checkpoint_path):
         print(f'Loading checkpoint "{checkpoint_path}"...')
         checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
-        self.epoch = checkpoint['epoch']
+        self.epoch = checkpoint['epoch'] + 1
         self.model.load_state_dict(checkpoint['model'])
         self.optimizer.load_state_dict(checkpoint['optimizer'])
-        print(f'Checkpoint loaded, resuming from epoch {self.epoch}.')
+        print(f'Checkpoint loaded, resuming from epoch {self.epoch+1}.')

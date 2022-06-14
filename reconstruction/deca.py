@@ -20,7 +20,7 @@ class DECAFaceReconstruction(DECA):
         self.merge_fn = merge_fn
 
         if merge_fn == 'predictive':
-            self.model = OptimizerNN(optimizer_file)
+            self.model = OptimizerNN(optimizer_file).to(DEVICE)
 
     def preprocess(self, img):
         img = cv2.resize(img, (224, 224))
@@ -56,7 +56,7 @@ class DECAFaceReconstruction(DECA):
                 encodings.append(enc)
 
             if self.merge_fn == "mean":
-                code_dict = self._average_all_params(encodings)
+                code_dict = self._combine_all_params(encodings)
                 reconstruction, _ = self.decode(code_dict)
                 reconstructions.append(reconstruction)
             elif self.merge_fn == "mean_shape":
@@ -64,22 +64,22 @@ class DECAFaceReconstruction(DECA):
                     reconstruction, _ = self.decode(code_dict)
                     reconstructions.append(reconstruction)
             else:  # predictive
-                images = torch.cat(images)
-                scores = self.model(images)
-                weights = torch.softmax(scores).cpu().numpy()
-                code_dict = self._average_all_params(encodings, weights)
+                images = torch.cat(images).to(DEVICE)
+                scores = self.model(images).squeeze(1)
+                weights = torch.softmax(scores, dim=0)
+                code_dict = self._combine_all_params(encodings, weights)
                 reconstruction, _ = self.decode(code_dict)
                 reconstructions.append(reconstruction)
 
         return reconstructions
 
     @staticmethod
-    def _get_parameter_mean(encodings, key, weights=None):
+    def _get_weighted_param_avg(encodings, key, weights=None):
         if weights is None:
-            weights = torch.ones(len(encodings)) / len(encodings)
+            weights = torch.ones(len(encodings), device=DEVICE) / len(encodings)
 
         all_params = torch.cat([enc[key] for enc in encodings], dim=0)
-        return torch.mean(all_params, dim=0)[None, :]
+        return torch.sum(torch.mul(weights, all_params.T).T, dim=0).unsqueeze(0)
 
     @staticmethod
     def _get_representative_sample(encodings, key):
@@ -88,14 +88,13 @@ class DECAFaceReconstruction(DECA):
         return int(nearest_idx)
 
     @staticmethod
-    def _average_all_params(encodings, weights=None):
+    def _combine_all_params(encodings, weights=None):
         code_dict = dict()
 
-        # TODO use weights
         exceptions = ['tex', 'images']
         param_keys = encodings[0].keys()
         for key in [k for k in param_keys if k not in exceptions]:
-            code_dict[key] = DECAFaceReconstruction._get_parameter_mean(encodings, key, weights)
+            code_dict[key] = DECAFaceReconstruction._get_weighted_param_avg(encodings, key, weights)
 
         # use image of most representative sample
         nearest_idx = DECAFaceReconstruction._get_representative_sample(encodings, 'shape')
@@ -108,6 +107,6 @@ class DECAFaceReconstruction(DECA):
         new_encodings = []
         for enc in encodings:
             code_dict = enc.copy()
-            code_dict['shape'] = DECAFaceReconstruction._get_parameter_mean(encodings, 'shape')
+            code_dict['shape'] = DECAFaceReconstruction._get_weighted_param_avg(encodings, 'shape')
             new_encodings.append(code_dict)
         return new_encodings

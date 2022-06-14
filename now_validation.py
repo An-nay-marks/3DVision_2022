@@ -47,7 +47,7 @@ def main(args):
                 landmark_dist = compute_error_metric(gt_mesh_path[0], gt_lmk_path[0], pred_mesh, landmark_7[0])
                 all_means.append(np.mean(landmark_dist))
 
-        np.save(os.path.join(ROOT_DIR, 'data', 'now_dist.npy'), all_means)
+        # np.save(os.path.join(ROOT_DIR, 'data', 'now_dist.npy'), all_means)
         print(f'median: {np.median(all_means)}')
         print(f'mean:   {np.mean(all_means)}')
         print(f'std:    {np.std(all_means)}')
