@@ -11,6 +11,12 @@ pip install torch==1.10.0+cu111 torchvision==0.11.0+cu111 torchaudio==0.10.0 -f 
 ```
 To install PyTorch3D, follow [INSTALL.md](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md).
 
+### Submodules
+Please clone all submodules.
+If you plan on running the pipeline on CPU, you have to change one line of code in the DECA submodule due to different torch versions:
+Goto dependencies/DECA/decalib/deca.py
+Change line 89 to: `checkpoint = torch.load(model_path, map_location=torch.device(self.device))`
+
 ### Model checkpoints
 Checkpoints for SCRFD, YOLOv5Face and ArcFace are provided in this repository.
 Follow the instructions in [README](https://github.com/YadiraF/DECA/blob/master/README.md) under 
