@@ -19,7 +19,7 @@ class DECAFaceReconstruction(DECA):
         super().__init__(cfg, DEVICE)
         self.merge_fn = merge_fn
 
-        if merge_fn == 'predictive':
+        if merge_fn == 'cnn':
             self.model = OptimizerNN(optimizer_file).to(DEVICE)
             self.model.eval()
 
@@ -64,7 +64,7 @@ class DECAFaceReconstruction(DECA):
                 for code_dict in self._average_shape_params(encodings):
                     reconstruction, _ = self.decode(code_dict)
                     reconstructions.append(reconstruction)
-            else:  # predictive
+            else:  # cnn
                 images = torch.cat(images).to(DEVICE)
                 scores = self.model(images).squeeze(1)
                 weights = torch.softmax(-scores, dim=0)

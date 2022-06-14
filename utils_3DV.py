@@ -19,7 +19,7 @@ CHECKPOINTS_DIR = os.path.join(ROOT_DIR, 'checkpoints')
 DETECTORS = ['scrfd', 'yolo5']
 ONLINE_CLASSIFIERS = ['real-time', 'vgg']
 OFFLINE_CLASSIFIERS = ['agglomerative', 'dbscan', 'mean-shift', 'vgg']
-MERGE_STRATEGIES = ['single', 'mean', 'mean_shape', 'predictive']
+MERGE_STRATEGIES = ['single', 'mean', 'mean_shape', 'cnn']
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 

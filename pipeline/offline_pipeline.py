@@ -31,7 +31,7 @@ class OfflinePipeline:
             else:
                 return
         elif self.classifier is not None:
-            self.classify(load_patches = True)
+            self.classify(load_patches=True)
         else:
             return
     
