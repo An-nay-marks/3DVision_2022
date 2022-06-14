@@ -1,14 +1,35 @@
+from cv2 import threshold
 import torch
 from torch import nn
 from utils_3DV import DEVICE
+import reconstruction.canny as canny
 
+
+class OptimizerCanny(nn.Module):
+    def __init__(self, checkpoint_path = None):
+        super(OptimizerCanny, self).__init__()
+        self.canny = canny.Net(threshold=3.0)
+        self.canny.eval()
+        self.tail = OptimizerNN(input_channels=6)
+
+        if checkpoint_path:
+            checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
+            self.epoch = checkpoint['epoch']
+            self.load_state_dict(checkpoint['model'])
+    
+    def forward(self, image):
+        edge_info = self.canny(image)
+        out = torch.cat((image, *edge_info), dim=1)
+        return self.tail(out)
+        
 
 class OptimizerNN(nn.Sequential):
-    def __init__(self, checkpoint_path=None):
+    def __init__(self, checkpoint_path=None, input_channels = 3):
         layers = nn.ModuleList()
         kernel_size = 3
 
-        prev_channel_size = 3
+        prev_channel_size = input_channels
+        
         curr_channel_size = 64
 
         for _ in range(3):
